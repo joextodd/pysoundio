@@ -4,6 +4,7 @@ structures.py
 Implements data structures and callbacks from libsoundio
 """
 import ctypes as _ctypes
+from _soundio import SOUNDIO_MAX_CHANNELS
 
 
 soundio_read_callback = _ctypes.CFUNCTYPE(
@@ -88,7 +89,7 @@ class SoundIoChannelLayout(_ctypes.Structure):
     _fields_ = [
         ('name', _ctypes.c_char_p),
         ('channel_count', _ctypes.c_int),
-        ('channels', _ctypes.c_uint * 24)  # SOUNDIO_MAX_CHANNELS
+        ('channels', _ctypes.c_uint * SOUNDIO_MAX_CHANNELS)
     ]
 
 

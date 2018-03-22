@@ -8,3 +8,15 @@ underlying backend.
 
 See [libsoundio](libsound.io)
 
+
+## Installation
+
+On macOS
+
+    `brew install libsoundio`
+
+For Linux and Windows head to libsound.io and compile from source
+
+Then install pysoundio
+
+    `python setup.py install`

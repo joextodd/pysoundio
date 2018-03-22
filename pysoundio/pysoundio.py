@@ -8,11 +8,14 @@ It is suitable for real-time and consumer software.
 -> https://libsound.io
 
 TODO:
+    - Fix high CPU
     - Check through all function, structure definitions
-    - Add enumerations
     - Fix seg faults, malloc errors
+    - Store ring callback in userdata
+    - Read callback in other thread?
 """
 import logging
+
 import ctypes as _ctypes
 import platform as _platform
 
@@ -34,6 +37,7 @@ DEFAULT_RING_BUFFER_DURATION = 10  # secs
 LOGGER = logging.getLogger(__name__)
 
 
+
 class _PySoundIo(object):
 
     def __init__(self, backend=None):
@@ -50,27 +54,40 @@ class _PySoundIo(object):
 
     @property
     def version(self):
-        """ Return version string """
+        """
+        Return version string
+        """
         return _lib.soundio_version_string().decode()
 
     def close(self):
-        """ Close libsoundio connection """
+        """
+        Close libsoundio connection
+        """
         if self._soundio:
             _lib.soundio_destroy(self._soundio)
 
     def _flush(self):
-        """ Flush events """
+        """
+        Atomically update information for all connected devices.
+        """
         _lib.soundio_flush_events(self._soundio)
 
     def _call(self, fn, *args, **kwargs):
-        """ Call libsoundio function and check error codes """
+        """
+        Call libsoundio function and check error codes.
+
+        Raises:
+            PySoundIoError with libsoundio error message
+        """
         rc = fn(*args, **kwargs)
         if rc != 0:
             err = _lib.soundio_strerror(rc)
             raise PySoundIoError(err.decode())
 
     def list_devices(self):
-        """ Return a list of available devices """
+        """
+        Return a list of available devices
+        """
         output_count = _lib.soundio_output_device_count(self._soundio)
         input_count = _lib.soundio_input_device_count(self._soundio)
 
@@ -110,7 +127,7 @@ class _PySoundIo(object):
 
 
 
-class _BaseStream(object):
+class _BaseStream(_PySoundIo):
 
     def __init__(self, backend=None, device_id=None,
                  channels=None, sample_rate=None, format=None,
@@ -137,37 +154,13 @@ class _BaseStream(object):
 
         self._flush()
 
-    @property
-    def version(self):
-        """ Return version string """
-        return _lib.soundio_version_string().decode()
-
     def close(self):
         """
         Clean up and close libsoundio connection
         """
         if self.device:
             _lib.soundio_device_unref(self.device)
-        if self._soundio:
-            _lib.soundio_destroy(self._soundio)
-
-    def _flush(self):
-        """
-        Atomically update information for all connected devices.
-        """
-        _lib.soundio_flush_events(self._soundio)
-
-    def _call(self, fn, *args, **kwargs):
-        """
-        Call libsoundio function and check error codes.
-
-        Raises:
-            PySoundIoError with libsoundio error message
-        """
-        rc = fn(*args, **kwargs)
-        if rc != 0:
-            err = _lib.soundio_strerror(rc)
-            raise PySoundIoError(err.decode())
+        super(_BaseStream, self).close()
 
     def supports_sample_rate(self, device, rate):
         """
@@ -252,10 +245,7 @@ class _BaseStream(object):
 
 class InputStream(_BaseStream):
     """
-    TODO:
-        - Enums
-        - Store ring callback in userdata
-        - Read callback in other thread?
+    Input Stream
     """
 
     def __init__(self, backend=None, device_id=None,
@@ -270,6 +260,7 @@ class InputStream(_BaseStream):
             self.device = self.get_input_device(self.device_id)
         else:
             self.device = self.get_default_input_device()
+
         LOGGER.info('Input Device: %s' % self.device.contents.name.decode())
 
         self.sort_channel_layouts(self.device)
@@ -279,6 +270,11 @@ class InputStream(_BaseStream):
         if not self.supports_format(self.device, self.format):
             raise PySoundIoError('Invalid format: %s interleaved' %
             (_lib.soundio_format_string(self.format).decode()))
+
+    def close(self):
+        if self.stream:
+            _lib.soundio_instream_destroy(self.stream)
+        super(InputStream, self).close()
 
     def get_default_input_device(self):
         """
@@ -403,14 +399,14 @@ class InputStream(_BaseStream):
         Start input stream.
         Set up instream object and the ring buffer.
         """
-        self.instream = self._create_input_stream()
+        self.stream = self._create_input_stream()
 
         LOGGER.info('%s %dHz %s interleaved' %
-            (self.instream.contents.layout.name.decode(), self.sample_rate,
+            (self.stream.contents.layout.name.decode(), self.sample_rate,
             _lib.soundio_format_string(self.format).decode()))
 
-        self.ring_buffer = self._create_ring_buffer(self.instream)
-        self._start_input_stream(self.instream)
+        self.ring_buffer = self._create_ring_buffer(self.stream)
+        self._start_input_stream(self.stream)
         self._flush()
 
     # Temporary
@@ -431,7 +427,7 @@ class InputStream(_BaseStream):
 
 class OutputStream(_BaseStream):
     """
-
+    Output Stream
 
     """
     def __init__(self, backend=None, device_id=None,

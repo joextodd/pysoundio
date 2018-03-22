@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
+
 import ctypes as _ctypes
 from ctypes.util import find_library as _find_library
 
@@ -124,5 +126,11 @@ _lib.soundio_strerror.argtypes = [_ctypes.c_int]
 _lib.soundio_strerror.restype = _ctypes.c_char_p
 _lib.soundio_version_string.restype = _ctypes.c_char_p
 
+
+try:
+    from _soundio import *
+except ImportError:
+    print('Please install libsoundio')
+    sys.exit(-1)
 
 from .pysoundio import InputStream
