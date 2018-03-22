@@ -1,13 +1,10 @@
 """
 structures.py
 
-Implements data structures from libsoundio
+Implements data structures and callbacks from libsoundio
 """
 import ctypes as _ctypes
 
-# ------------------------------------------------------------------------
-# Callbacks
-# ------------------------------------------------------------------------
 
 soundio_read_callback = _ctypes.CFUNCTYPE(
     None,
@@ -30,28 +27,52 @@ soundio_error_callback = _ctypes.CFUNCTYPE(
     _ctypes.c_void_p, _ctypes.c_int
 )
 
-
-# ------------------------------------------------------------------------
-# Structures
-# ------------------------------------------------------------------------
-
 class SoundIo(_ctypes.Structure):
-    _fields_ = [
-        ('userdata', _ctypes.c_void_p),
-        ('on_devices_change', _ctypes.c_void_p),
-        ('on_backend_disconnect', _ctypes.c_void_p),
-        ('on_events_signal', _ctypes.c_void_p),
-        ('current_backend', _ctypes.c_uint),
-        ('app_name', _ctypes.c_char_p),
-        ('emit_rtprio_warning', _ctypes.c_void_p),
-        ('jack_info_callback', _ctypes.c_void_p),
-        ('jack_error_callback', _ctypes.c_void_p)
-    ]
+    """
+    Forward declaration of SoundIo structure
+    """
+    pass
+
+
+_soundio_on_devices_change = _ctypes.CFUNCTYPE(
+    None,
+    _ctypes.POINTER(SoundIo)
+)
+_soundio_on_backend_disconnect = _ctypes.CFUNCTYPE(
+    None,
+    _ctypes.POINTER(SoundIo), _ctypes.c_int
+)
+_soundio_on_events_signal = _ctypes.CFUNCTYPE(
+    None,
+    _ctypes.POINTER(SoundIo)
+)
+_soundio_emit_rtprio_warning = _ctypes.CFUNCTYPE(None)
+_soundio_jack_info_callback = _ctypes.CFUNCTYPE(
+    None,
+    _ctypes.c_char_p
+)
+_soundio_jack_error_callback = _ctypes.CFUNCTYPE(
+    None,
+    _ctypes.c_char_p
+)
+
+
+SoundIo._fields_ = [
+    ('userdata', _ctypes.c_void_p),
+    ('on_devices_change', _soundio_on_devices_change),
+    ('on_backend_disconnect', _soundio_on_backend_disconnect),
+    ('on_events_signal', _soundio_on_events_signal),
+    ('current_backend', _ctypes.c_uint),
+    ('app_name', _ctypes.c_char_p),
+    ('emit_rtprio_warning', _soundio_emit_rtprio_warning),
+    ('jack_info_callback', _soundio_jack_info_callback),
+    ('jack_error_callback', _soundio_jack_error_callback)
+]
 
 
 class SoundIoChannelArea(_ctypes.Structure):
     _fields_ = [
-        ('ptr', _ctypes.c_char_p),
+        ('ptr', _ctypes.POINTER(_ctypes.c_char)),
         ('step', _ctypes.c_int)
     ]
 
@@ -67,7 +88,7 @@ class SoundIoChannelLayout(_ctypes.Structure):
     _fields_ = [
         ('name', _ctypes.c_char_p),
         ('channel_count', _ctypes.c_int),
-        ('channels', _ctypes.c_uint)
+        ('channels', _ctypes.c_uint * 24)  # SOUNDIO_MAX_CHANNELS
     ]
 
 
@@ -133,7 +154,7 @@ class SoundIoOutStream(_ctypes.Structure):
     ]
 
 
-class SoundIoOsMirroredMemory(_ctypes.Structure):
+class _SoundIoOsMirroredMemory(_ctypes.Structure):
     _fields_ = [
         ('capacity', _ctypes.c_size_t),
         ('address', _ctypes.c_char_p),
@@ -141,17 +162,16 @@ class SoundIoOsMirroredMemory(_ctypes.Structure):
     ]
 
 
-class SoundIoRingBuffer(_ctypes.Structure):
+class _SoundIoAtomicULong(_ctypes.Structure):
     _fields_ = [
-        ('mem', SoundIoOsMirroredMemory),
-        ('write_offset', _ctypes.c_ulong),
-        ('read_offset', _ctypes.c_ulong),
-        ('capacity', _ctypes.c_int)
+        ('x', _ctypes.c_ulong)
     ]
 
 
-class RecordContext(_ctypes.Structure):
+class SoundIoRingBuffer(_ctypes.Structure):
     _fields_ = [
-        ('input_buffer', _ctypes.POINTER(SoundIoRingBuffer)),
-        ('output_buffer', _ctypes.POINTER(SoundIoRingBuffer))
+        ('mem', _SoundIoOsMirroredMemory),
+        ('write_offset', _SoundIoAtomicULong),
+        ('read_offset', _SoundIoAtomicULong),
+        ('capacity', _ctypes.c_int)
     ]
