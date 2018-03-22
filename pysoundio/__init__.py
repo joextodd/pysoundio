@@ -1,6 +1,4 @@
 #
-# MIT License
-#
 # Copyright (c) 2018 Joe Todd
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -119,7 +117,7 @@ _lib.soundio_ring_buffer_advance_write_ptr.argtypes = [
 _lib.soundio_ring_buffer_free_count.argtypes = [_ctypes.POINTER(SoundIoRingBuffer)]
 _lib.soundio_ring_buffer_free_count.restype = _ctypes.c_int
 _lib.soundio_ring_buffer_read_ptr.argtypes = [_ctypes.POINTER(SoundIoRingBuffer)]
-_lib.soundio_ring_buffer_read_ptr.restype = _ctypes.c_char_p
+_lib.soundio_ring_buffer_read_ptr.restype = _ctypes.POINTER(_ctypes.c_char)
 _lib.soundio_ring_buffer_write_ptr.argtypes = [_ctypes.POINTER(SoundIoRingBuffer)]
 _lib.soundio_ring_buffer_write_ptr.restype = _ctypes.POINTER(_ctypes.c_int8)
 _lib.soundio_strerror.argtypes = [_ctypes.c_int]
@@ -127,4 +125,4 @@ _lib.soundio_strerror.restype = _ctypes.c_char_p
 _lib.soundio_version_string.restype = _ctypes.c_char_p
 
 
-from .pysoundio import PySoundIo
+from .pysoundio import InputStream
