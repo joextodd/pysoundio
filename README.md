@@ -9,14 +9,23 @@ underlying backend.
 See [libsoundio](libsound.io)
 
 
+## Dependencies
+
+### macOS
+
+    brew install libsoundio
+
+### Ubuntu / Debian
+
+    apt-get install libsoundio-dev
+
+
 ## Installation
 
-On macOS
+Install from PyPi
 
-    `brew install libsoundio`
+    pip install pysoundio
 
-For Linux and Windows head to libsound.io and compile from source
+or from source
 
-Then install pysoundio
-
-    `python setup.py install`
+    python setup.py install

@@ -10,7 +10,7 @@
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
-  "_soundio",
+  "_soundiox",
   NULL,
   -1,
   NULL,
@@ -23,9 +23,9 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC
 #if PY_MAJOR_VERSION >= 3
-PyInit__soundio(void)
+PyInit__soundiox(void)
 #else
-init_soundio(void)
+init_soundiox(void)
 #endif
 {
   PyObject* m;
@@ -35,7 +35,7 @@ init_soundio(void)
 #if PY_MAJOR_VERSION >= 3
   m = PyModule_Create(&moduledef);
 #else
-  m = Py_InitModule("_soundio", NULL);
+  m = Py_InitModule("_soundiox", NULL);
 #endif
 
     // Constants

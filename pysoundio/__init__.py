@@ -34,15 +34,13 @@ else:
     _lib = _ctypes.CDLL(_libname)
 
 
-from .structures import (
-    soundio_error_callback,
-    soundio_overflow_callback,
-    soundio_read_callback,
+from ._structures import (
     SoundIo,
     SoundIoChannelArea,
     SoundIoChannelLayout,
     SoundIoDevice,
     SoundIoInStream,
+    SoundIoOutStream,
     SoundIoRingBuffer,
 )
 
@@ -113,6 +111,28 @@ _lib.soundio_instream_pause.argtypes = [_ctypes.POINTER(SoundIoInStream), _ctype
 _lib.soundio_instream_pause.restype = _ctypes.c_int
 _lib.soundio_instream_start.argtypes = [_ctypes.POINTER(SoundIoInStream)]
 _lib.soundio_instream_start.restype = _ctypes.c_int
+_lib.soundio_outstream_begin_write.argtypes = [
+    _ctypes.POINTER(SoundIoOutStream), _ctypes.POINTER(_ctypes.POINTER(SoundIoChannelArea)),
+    _ctypes.POINTER(_ctypes.c_int)
+]
+_lib.soundio_outstream_begin_write.restype = _ctypes.c_int
+_lib.soundio_outstream_clear_buffer.argtypes = [_ctypes.POINTER(SoundIoOutStream)]
+_lib.soundio_outstream_clear_buffer.restype = _ctypes.c_int
+_lib.soundio_outstream_create.argtypes = [_ctypes.POINTER(SoundIoDevice)]
+_lib.soundio_outstream_create.restype = _ctypes.POINTER(SoundIoOutStream)
+_lib.soundio_outstream_destroy.argtypes = [_ctypes.POINTER(SoundIoOutStream)]
+_lib.soundio_outstream_end_write.argtypes = [_ctypes.POINTER(SoundIoOutStream)]
+_lib.soundio_outstream_end_write.restype = _ctypes.c_int
+_lib.soundio_outstream_get_latency.argtypes = [
+    _ctypes.POINTER(SoundIoOutStream), _ctypes.POINTER(_ctypes.c_double)
+]
+_lib.soundio_outstream_get_latency.restype = _ctypes.c_int
+_lib.soundio_outstream_open.argtypes = [_ctypes.POINTER(SoundIoOutStream)]
+_lib.soundio_outstream_open.restype = _ctypes.c_int
+_lib.soundio_outstream_pause.argtypes = [_ctypes.POINTER(SoundIoOutStream), _ctypes.c_bool]
+_lib.soundio_outstream_pause.restype = _ctypes.c_int
+_lib.soundio_outstream_start.argtypes = [_ctypes.POINTER(SoundIoOutStream)]
+_lib.soundio_outstream_start.restype = _ctypes.c_int
 _lib.soundio_ring_buffer_advance_write_ptr.argtypes = [
     _ctypes.POINTER(SoundIoRingBuffer), _ctypes.c_int
 ]
@@ -128,9 +148,9 @@ _lib.soundio_version_string.restype = _ctypes.c_char_p
 
 
 try:
-    from _soundio import *
+    from _soundiox import *
 except ImportError:
-    print('Please install libsoundio')
+    print('Please install libsoundio, then reinstall pysoundio')
     sys.exit(-1)
 
-from .pysoundio import InputStream
+from .pysoundio import InputStream, OutputStream

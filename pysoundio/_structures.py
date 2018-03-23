@@ -4,26 +4,26 @@ structures.py
 Implements data structures and callbacks from libsoundio
 """
 import ctypes as _ctypes
-from _soundio import SOUNDIO_MAX_CHANNELS
+from _soundiox import SOUNDIO_MAX_CHANNELS
 
 
-soundio_read_callback = _ctypes.CFUNCTYPE(
+SoundIoReadCallback = _ctypes.CFUNCTYPE(
     None,
     _ctypes.c_void_p, _ctypes.c_int, _ctypes.c_int,
 )
-soundio_write_callback = _ctypes.CFUNCTYPE(
+SoundIoWriteCallback = _ctypes.CFUNCTYPE(
     None,
     _ctypes.c_void_p, _ctypes.c_int, _ctypes.c_int,
 )
-soundio_overflow_callback = _ctypes.CFUNCTYPE(
+SoundIoOverflowCallback = _ctypes.CFUNCTYPE(
     None,
     _ctypes.c_void_p
 )
-soundio_underflow_callback = _ctypes.CFUNCTYPE(
+SoundIoUnderflowCallback = _ctypes.CFUNCTYPE(
     None,
     _ctypes.c_void_p
 )
-soundio_error_callback = _ctypes.CFUNCTYPE(
+SoundIoErrorCallback = _ctypes.CFUNCTYPE(
     None,
     _ctypes.c_void_p, _ctypes.c_int
 )
@@ -35,24 +35,24 @@ class SoundIo(_ctypes.Structure):
     pass
 
 
-_soundio_on_devices_change = _ctypes.CFUNCTYPE(
+_SoundIoOnDevicesChange = _ctypes.CFUNCTYPE(
     None,
     _ctypes.POINTER(SoundIo)
 )
-_soundio_on_backend_disconnect = _ctypes.CFUNCTYPE(
+_SoundIoOnBackendDisconnect = _ctypes.CFUNCTYPE(
     None,
     _ctypes.POINTER(SoundIo), _ctypes.c_int
 )
-_soundio_on_events_signal = _ctypes.CFUNCTYPE(
+_SoundIoOnEventsSignal = _ctypes.CFUNCTYPE(
     None,
     _ctypes.POINTER(SoundIo)
 )
-_soundio_emit_rtprio_warning = _ctypes.CFUNCTYPE(None)
-_soundio_jack_info_callback = _ctypes.CFUNCTYPE(
+_SoundIoEmitRtprioWarning = _ctypes.CFUNCTYPE(None)
+_SoundIoJackInfoCallback = _ctypes.CFUNCTYPE(
     None,
     _ctypes.c_char_p
 )
-_soundio_jack_error_callback = _ctypes.CFUNCTYPE(
+_SoundIoJackErrorCallback = _ctypes.CFUNCTYPE(
     None,
     _ctypes.c_char_p
 )
@@ -60,14 +60,14 @@ _soundio_jack_error_callback = _ctypes.CFUNCTYPE(
 
 SoundIo._fields_ = [
     ('userdata', _ctypes.c_void_p),
-    ('on_devices_change', _soundio_on_devices_change),
-    ('on_backend_disconnect', _soundio_on_backend_disconnect),
-    ('on_events_signal', _soundio_on_events_signal),
+    ('on_devices_change', _SoundIoOnDevicesChange),
+    ('on_backend_disconnect', _SoundIoOnBackendDisconnect),
+    ('on_events_signal', _SoundIoOnEventsSignal),
     ('current_backend', _ctypes.c_uint),
     ('app_name', _ctypes.c_char_p),
-    ('emit_rtprio_warning', _soundio_emit_rtprio_warning),
-    ('jack_info_callback', _soundio_jack_info_callback),
-    ('jack_error_callback', _soundio_jack_error_callback)
+    ('emit_rtprio_warning', _SoundIoEmitRtprioWarning),
+    ('jack_info_callback', _SoundIoJackInfoCallback),
+    ('jack_error_callback', _SoundIoJackErrorCallback)
 ]
 
 
@@ -125,9 +125,9 @@ class SoundIoInStream(_ctypes.Structure):
         ('layout', SoundIoChannelLayout),
         ('software_latency', _ctypes.c_double),
         ('userdata', _ctypes.c_void_p),
-        ('read_callback', soundio_read_callback),
-        ('overflow_callback', soundio_overflow_callback),
-        ('error_callback', soundio_error_callback),
+        ('read_callback', SoundIoReadCallback),
+        ('overflow_callback', SoundIoOverflowCallback),
+        ('error_callback', SoundIoErrorCallback),
         ('name', _ctypes.c_char_p),
         ('non_terminal_hint', _ctypes.c_bool),
         ('bytes_per_frame', _ctypes.c_int),
@@ -144,9 +144,9 @@ class SoundIoOutStream(_ctypes.Structure):
         ('layout', SoundIoChannelLayout),
         ('software_latency', _ctypes.c_double),
         ('userdata', _ctypes.c_void_p),
-        ('write_callback', soundio_read_callback),
-        ('underflow_callback', soundio_overflow_callback),
-        ('error_callback', soundio_error_callback),
+        ('write_callback', SoundIoWriteCallback),
+        ('underflow_callback', SoundIoUnderflowCallback),
+        ('error_callback', SoundIoErrorCallback),
         ('name', _ctypes.c_char_p),
         ('non_terminal_hint', _ctypes.c_bool),
         ('bytes_per_frame', _ctypes.c_int),

@@ -8,37 +8,52 @@ It is suitable for real-time and consumer software.
 -> https://libsound.io
 
 TODO:
-    - Fix high CPU
+    - Listening demo
     - Check through all function, structure definitions
-    - Fix seg faults, malloc errors
-    - Store ring callback in userdata
-    - Read callback in other thread?
+    - Bring back ring buffer without affecting CPU
+    - Store ring buffer in userdata
+    - Add enums to constants
+    - Autoset formats and sample rates if not specified
+    - Tests
+    - TravisCI
+    - Docs
 """
+import math
+import time
+import struct
 import logging
+import threading
+import multiprocessing
 
+import array as ar
 import ctypes as _ctypes
 import platform as _platform
 
 from . import _lib
-from .exceptions import PySoundIoError
-from .structures import (
-    soundio_error_callback,
-    soundio_overflow_callback,
-    soundio_read_callback,
+from .constants import DEFAULT_RING_BUFFER_DURATION
+from ._structures import (
+    SoundIoErrorCallback,
+    SoundIoOverflowCallback,
+    SoundIoReadCallback,
+    SoundIoUnderflowCallback,
+    SoundIoWriteCallback,
     SoundIo,
     SoundIoChannelArea,
     SoundIoChannelLayout,
     SoundIoDevice,
     SoundIoInStream,
+    SoundIoOutStream,
     SoundIoRingBuffer,
 )
 
-DEFAULT_RING_BUFFER_DURATION = 10  # secs
 LOGGER = logging.getLogger(__name__)
 
 
+class PySoundIoError(Exception):
+    pass
 
-class _PySoundIo(object):
+
+class PySoundIo(object):
 
     def __init__(self, backend=None):
         self.backend = backend
@@ -126,33 +141,24 @@ class _PySoundIo(object):
         LOGGER.info('%s is_raw=%s' % (device.contents.name, device.contents.is_raw))
 
 
-
-class _BaseStream(_PySoundIo):
+class _BaseStream(PySoundIo):
 
     def __init__(self, backend=None, device_id=None,
-                 channels=None, sample_rate=None, format=None,
-                 callback=None, overflow_callback=None, error_callback=None):
+                 channels=None, sample_rate=None, format=None, block_size=None,
+                 callback=None, error_callback=None):
 
         self.backend = backend
         self.channels = channels
         self.sample_rate = sample_rate
         self.format = format
+        self.block_size = block_size
         self.callback = callback
-        self.overflow_callback = overflow_callback
         self.error_callback = error_callback
 
         self.stream = None
         self.buffer = None
 
-        self._soundio = _lib.soundio_create()
-        if self._soundio is None:
-            raise PySoundIoError('Out of memory')
-        if backend:
-            self._call(_lib.soundio_connect_backend, self._soundio, backend)
-        else:
-            self._call(_lib.soundio_connect, self._soundio)
-
-        self._flush()
+        super(_BaseStream, self).__init__(backend)
 
     def close(self):
         """
@@ -226,34 +232,60 @@ class _BaseStream(_PySoundIo):
             raise PySoundIoError('Failed to create ring buffer')
         return ring_buffer
 
-    def _overflow_callback(self, stream):
-        """
-        Internal overflow callback, which calls the external
-        overflow callback if defined.
-        """
-        if self.overflow_callback:
-            self.overflow_callback(stream)
 
-    def _error_callback(self, stream, err):
+class _InputProcessingThread(threading.Thread):
+
+    def __init__(self, parent, instream,
+                 frame_count_min, frame_count_max,
+                 *args, **kwargs):
+        self._call = parent._call
+        self.callback = parent.callback
+        self.instream = instream
+        self.frame_count_min = frame_count_min
+        self.frame_count_max = frame_count_max
+        super(_InputProcessingThread, self).__init__(*args, **kwargs)
+        self.start()
+
+    def run(self):
         """
-        Internal error callback, which calls the external
-        error callback if defined.
+        Retrieve data from input stream structure and pass to callback
         """
-        if self.error_callback:
-            self.error_callback(stream, err)
+        instream = _ctypes.cast(self.instream, _ctypes.POINTER(SoundIoInStream))
+        areas = _ctypes.POINTER(SoundIoChannelArea)()
+
+        data = bytearray()
+        frame_count = self.frame_count_max
+        frames_left = self.frame_count_max
+        bytes_per_sample = instream.contents.bytes_per_sample
+
+        while frames_left:
+            self._call(_lib.soundio_instream_begin_read,
+                           instream,
+                           _ctypes.byref(areas),
+                           _ctypes.byref(_ctypes.c_int(frame_count)))
+
+            for frame in range(0, frame_count * bytes_per_sample, bytes_per_sample):
+                for ch in range(0, instream.contents.layout.channel_count):
+                    data.extend(areas[ch].ptr[frame:frame + bytes_per_sample])
+
+            self._call(_lib.soundio_instream_end_read, instream)
+            frames_left -= frame_count
+
+        if self.callback:
+            self.callback(bytes(data), frame_count)
 
 
 class InputStream(_BaseStream):
     """
     Input Stream
     """
-
     def __init__(self, backend=None, device_id=None,
-                 channels=None, sample_rate=None, format=None,
+                 channels=None, sample_rate=None, format=None, block_size=None,
                  callback=None, overflow_callback=None, error_callback=None):
+        self.overflow_callback = overflow_callback
         super(InputStream, self).__init__(
-            backend, device_id, channels, sample_rate, format,
-            callback, overflow_callback, error_callback
+            backend, device_id, channels, sample_rate, format, block_size,
+            callback, error_callback
         )
         if device_id:
             self.device_id = device_id
@@ -272,6 +304,9 @@ class InputStream(_BaseStream):
             (_lib.soundio_format_string(self.format).decode()))
 
     def close(self):
+        """
+        Close input stream and pysoundio connection.
+        """
         if self.stream:
             _lib.soundio_instream_destroy(self.stream)
         super(InputStream, self).close()
@@ -331,10 +366,12 @@ class InputStream(_BaseStream):
 
         instream.contents.format = self.format
         instream.contents.sample_rate = self.sample_rate
+        if self.block_size:
+            instream.contents.software_latency = float(self.block_size) / self.sample_rate
 
-        instream.contents.read_callback = soundio_read_callback(self._read_callback)
-        instream.contents.overflow_callback = soundio_overflow_callback(self._overflow_callback)
-        instream.contents.error_callback = soundio_error_callback(self._error_callback)
+        instream.contents.read_callback = SoundIoReadCallback(self._read_callback)
+        instream.contents.overflow_callback = SoundIoOverflowCallback(self._overflow_callback)
+        instream.contents.error_callback = SoundIoErrorCallback(self._error_callback)
 
         self._call(_lib.soundio_instream_open, instream)
         return instream
@@ -352,47 +389,69 @@ class InputStream(_BaseStream):
         """
         Internal read callback.
         """
-        instream = _ctypes.cast(instream, _ctypes.POINTER(SoundIoInStream))
-        _lib.soundio_ring_buffer_write_ptr(self.ring_buffer)
+        self.thread = _InputProcessingThread(
+            parent=self,
+            instream=instream,
+            frame_count_min=frame_count_min,
+            frame_count_max=frame_count_max
+        )
 
-        areas = _ctypes.POINTER(SoundIoChannelArea)()
-        write_ptr = _lib.soundio_ring_buffer_write_ptr(self.ring_buffer)
-        free_bytes = _lib.soundio_ring_buffer_free_count(self.ring_buffer)
-        free_count = int(free_bytes / instream.contents.bytes_per_frame)
-        if free_count < frame_count_min:
-            raise PySoundIoError('Ring buffer overflow')
+        # write_ptr = _lib.soundio_ring_buffer_write_ptr(self.ring_buffer)
+        # free_bytes = _lib.soundio_ring_buffer_free_count(self.ring_buffer)
+        # free_count = int(free_bytes / instream.contents.bytes_per_frame)
+        # if free_count < frame_count_min:
+        #     raise PySoundIoError('Ring buffer overflow')
 
-        write_frames = min(free_count, frame_count_max)
-        frames_left = write_frames
+        # write_frames = min(free_count, frame_count_max)
+        # frames_left = write_frames
 
-        while True:
-            frame_count = frames_left
-            self._call(_lib.soundio_instream_begin_read,
-                       instream,
-                       _ctypes.byref(areas),
-                       _ctypes.byref(_ctypes.c_int(frame_count)))
-            if not frame_count:
-                break
-            if not areas:
-                _ctypes.memset(write_ptr, 0, frame_count * instream.contents.bytes_per_frame)
-            else:
-                for frame in range(0, frame_count):
-                    for ch in range(0, instream.contents.layout.channel_count):
-                        _ctypes.memmove(write_ptr, areas[ch].ptr, instream.contents.bytes_per_sample)
+        # t1 = time.time()
 
-                        a_ptr = _ctypes.cast(_ctypes.pointer(areas[ch].ptr), _ctypes.POINTER(_ctypes.c_void_p))
-                        a_ptr.contents.value += areas[ch].step
+        # while True:
+        #     frame_count = frames_left
+        #     if not frame_count:
+        #         break
+        #     self._call(_lib.soundio_instream_begin_read,
+        #                instream,
+        #                _ctypes.byref(areas),
+        #                _ctypes.byref(_ctypes.c_int(frame_count)))
+        #     if not areas:
+        #         _ctypes.memset(write_ptr, 0, frame_count * instream.contents.bytes_per_frame)
+        #     else:
+        #         for frame in range(0, frame_count):
+        #             for ch in range(0, instream.contents.layout.channel_count):
+        #                 _ctypes.memmove(write_ptr, areas[ch].ptr, instream.contents.bytes_per_sample)
 
-                        w_ptr = _ctypes.cast(_ctypes.pointer(write_ptr), _ctypes.POINTER(_ctypes.c_void_p))
-                        w_ptr.contents.value += instream.contents.bytes_per_sample
+        #                 a_ptr = _ctypes.cast(_ctypes.pointer(areas[ch].ptr), _ctypes.POINTER(_ctypes.c_void_p))
+        #                 a_ptr.contents.value += areas[ch].step
 
-            self._call(_lib.soundio_instream_end_read, instream)
-            frames_left -= frame_count
-            if frames_left <= 0:
-                break
+        #                 w_ptr = _ctypes.cast(_ctypes.pointer(write_ptr), _ctypes.POINTER(_ctypes.c_void_p))
+        #                 w_ptr.contents.value += instream.contents.bytes_per_sample
 
-        advance_bytes = write_frames * instream.contents.bytes_per_frame
-        _lib.soundio_ring_buffer_advance_write_ptr(self.ring_buffer, advance_bytes)
+        #     self._call(_lib.soundio_instream_end_read, instream)
+        #     frames_left -= frame_count
+        #     if frames_left <= 0:
+        #         break
+
+        # print(int((time.time() - t1) * 1000000))
+        # advance_bytes = write_frames * instream.contents.bytes_per_frame
+        # _lib.soundio_ring_buffer_advance_write_ptr(self.ring_buffer, advance_bytes)
+
+    def _overflow_callback(self, stream):
+        """
+        Internal overflow callback, which calls the external
+        overflow callback if defined.
+        """
+        if self.overflow_callback:
+            self.overflow_callback(stream)
+
+    def _error_callback(self, stream, err):
+        """
+        Internal error callback, which calls the external
+        error callback if defined.
+        """
+        if self.error_callback:
+            self.error_callback(stream, err)
 
     def start_stream(self):
         """
@@ -424,18 +483,17 @@ class InputStream(_BaseStream):
         _lib.soundio_ring_buffer_advance_read_ptr(self.ring_buffer, fill_bytes)
 
 
-
 class OutputStream(_BaseStream):
     """
     Output Stream
 
     """
     def __init__(self, backend=None, device_id=None,
-                 channels=None, sample_rate=None, format=None,
-                 callback=None, overflow_callback=None, error_callback=None):
+                 channels=None, sample_rate=None, format=None, block_size=None,
+                 callback=None, underflow_callback=None, error_callback=None):
         super(OutputStream, self).__init__(
-            backend, device_id, channels, sample_rate, format,
-            callback, overflow_callback, error_callback
+            backend, device_id, channels, sample_rate, format, block_size,
+            callback, error_callback
         )
         if device_id:
             self.device_id = device_id
@@ -443,6 +501,8 @@ class OutputStream(_BaseStream):
         else:
             self.device = self.get_default_output_device()
         LOGGER.info('Output Device: %s' % self.device.contents.name.decode())
+
+        self.underflow_callback = underflow_callback
 
         self.sort_channel_layouts(self.device)
         if not self.supports_sample_rate(self.device, self.sample_rate):
@@ -452,6 +512,15 @@ class OutputStream(_BaseStream):
             raise PySoundIoError('Invalid format: %s interleaved' %
             (_lib.soundio_format_string(self.format).decode()))
 
+        self.seconds_offset = 0
+
+    def close(self):
+        """
+        Close output stream and pysoundio connection.
+        """
+        if self.stream:
+            _lib.soundio_outstream_destroy(self.stream)
+        super(OutputStream, self).close()
 
     def get_default_output_device(self):
         """
@@ -489,3 +558,106 @@ class OutputStream(_BaseStream):
             raise PySoundIoError('Unable to probe output device: %s' % (
                 _lib.soundio_strerror(device.contents.probe_error)))
         return device
+
+    def _create_output_stream(self):
+        """
+        Allocates memory and sets defaults for output stream
+
+        Returns: SoundIoOutStream outstream object
+
+        Raises:
+            PySoundIoError if memory could not be allocated
+        """
+        outstream = _lib.soundio_outstream_create(self.device)
+        if not outstream:
+            raise PySoundIoError('Could not create output stream')
+
+        outstream.contents.format = self.format
+        outstream.contents.sample_rate = self.sample_rate
+        if self.block_size:
+            outstream.contents.software_latency = float(self.block_size) / self.sample_rate
+
+        outstream.contents.write_callback = SoundIoWriteCallback(self._write_callback)
+        # outstream.contents.underflow_callback = SoundIoUnderflowCallback(self._underflow_callback)
+        # outstream.contents.error_callback = SoundIoErrorCallback(self._error_callback)
+
+        self._call(_lib.soundio_outstream_open, outstream)
+        return outstream
+
+    def _start_output_stream(self, outstream):
+        """
+        Start an output stream running.
+
+        Raises:
+            PySoundIoError if there is an error starting stream.
+        """
+        self._call(_lib.soundio_outstream_start, outstream)
+
+    def _write_callback(self, outstream, frame_count_min, frame_count_max):
+        """
+        Internal write callback
+        """
+        outstream = _ctypes.cast(outstream, _ctypes.POINTER(SoundIoOutStream))
+        areas = _ctypes.POINTER(SoundIoChannelArea)()
+
+        data = bytearray()
+        frame_count = frame_count_max
+        frames_left = frame_count_max
+
+        pitch = 440
+        radians_per_second = pitch * 2.0 * math.pi;
+        seconds_per_frame = 1.0 / self.sample_rate
+        bytes_per_sample = outstream.contents.bytes_per_sample
+
+        while frames_left:
+            self._call(_lib.soundio_outstream_begin_write,
+                       outstream,
+                       _ctypes.byref(areas),
+                       _ctypes.byref(_ctypes.c_int(frame_count)))
+
+            for frame in range(0, frame_count * bytes_per_sample, bytes_per_sample):
+                for ch in range(0, outstream.contents.layout.channel_count):
+                    # TODO: make this work for all data types
+                    data = struct.pack('f', math.sin(
+                        (self.seconds_offset + frame * seconds_per_frame) * radians_per_second))
+                    for byte in range(0, bytes_per_sample):
+                        areas[ch].ptr[frame + byte] = data[byte]
+
+            self.seconds_offset += seconds_per_frame * frame_count
+            self._call(_lib.soundio_outstream_end_write, outstream)
+            frames_left -= frame_count
+
+    def _underflow_callback(self, stream):
+        """
+        Internal underflow callback, which calls the external
+        underflow callback if defined.
+        """
+        if self.underflow_callback:
+            self.underflow_callback(stream)
+
+    def _error_callback(self, stream, err):
+        """
+        Internal error callback, which calls the external
+        error callback if defined.
+        """
+        if self.error_callback:
+            self.error_callback(stream, err)
+
+    def start_stream(self):
+        """
+        Start output stream.
+        Set up outstream object and the ring buffer.
+        """
+        self.stream = self._create_output_stream()
+
+        LOGGER.info('%s %dHz %s interleaved' %
+            (self.stream.contents.layout.name.decode(), self.sample_rate,
+            _lib.soundio_format_string(self.format).decode()))
+
+        self.ring_buffer = self._create_ring_buffer(self.stream)
+        self._start_output_stream(self.stream)
+        self._flush()
+
+
+def list_devices():
+    pass
