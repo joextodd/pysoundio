@@ -25,65 +25,101 @@
 #ifndef __SOUNDIOX_H__
 #define __SOUNDIOX_H__
 
+/**
+ * Initialisation
+ */
+static PyObject *
+pysoundio__create(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__destroy(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__connect(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__connect_backend(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__flush(PyObject *self, PyObject *args);
 
+/**
+ * Debugging
+ */
 static PyObject *
-pysoundio_create(PyObject *self, PyObject *args);
+pysoundio__strerror(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_destroy(PyObject *self, PyObject *args);
+pysoundio__version_string(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_connect(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_flush(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_strerror(PyObject *self, PyObject *args);
+pysoundio__format_string(PyObject *self, PyObject *args);
 
+/**
+ * Device API
+ */
+static PyObject *
+pysoundio__get_output_device_count(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__get_input_device_count(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__default_input_device_index(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__default_output_device_index(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__get_input_device(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__get_output_device(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__device_unref(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__device_supports_sample_rate(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__device_supports_format(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__device_sort_channel_layouts(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__channel_layout_get_default(PyObject *self, PyObject *args);
 
+/**
+ * Input Stream API
+ */
 static PyObject *
-pysoundio_get_output_device_count(PyObject *self, PyObject *args);
+pysoundio__set_read_callback(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_get_input_device_count(PyObject *self, PyObject *args);
+pysoundio__instream_create(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_default_input_device_index(PyObject *self, PyObject *args);
+pysoundio__instream_destroy(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_default_output_device_index(PyObject *self, PyObject *args);
+pysoundio__instream_open(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_get_input_device(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_get_output_device(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_device_unref(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_device_supports_sample_rate(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_device_sort_channel_layouts(PyObject *self, PyObject *args);
+pysoundio__instream_start(PyObject *self, PyObject *args);
 
+/**
+ * Output Stream API
+ */
+static PyObject *
+pysoundio__outstream_create(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__outstream_destroy(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__outstream_open(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__outstream_start(PyObject *self, PyObject *args);
 
+/**
+ * Ring Buffer API
+ */
 static PyObject *
-pysoundio_channel_layout_get_default(PyObject *self, PyObject *args);
+pysoundio__ring_buffer_create(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_instream_create(PyObject *self, PyObject *args);
+pysoundio__ring_buffer_destroy(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_instream_destroy(PyObject *self, PyObject *args);
+pysoundio__ring_buffer_fill_count(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_instream_open(PyObject *self, PyObject *args);
+pysoundio__ring_buffer_read_ptr(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_instream_start(PyObject *self, PyObject *args);
-
-
+pysoundio__ring_buffer_advance_read_ptr(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_ring_buffer_create(PyObject *self, PyObject *args);
+pysoundio__ring_buffer_write_ptr(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_ring_buffer_fill_count(PyObject *self, PyObject *args);
+pysoundio__ring_buffer_free_count(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio_ring_buffer_read_ptr(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_ring_buffer_advance_read_ptr(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_ring_buffer_write_ptr(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_ring_buffer_free_count(PyObject *self, PyObject *args);
-static PyObject *
-pysoundio_ring_buffer_advance_write_ptr(PyObject *self, PyObject *args);
+pysoundio__ring_buffer_advance_write_ptr(PyObject *self, PyObject *args);
 
 
 #endif
