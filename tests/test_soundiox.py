@@ -167,7 +167,7 @@ class RingBufferAPI(unittest.TestCase):
         self.s = pysoundio.create()
         pysoundio.connect_backend(self.s, pysoundio.SoundIoBackendDummy)
         pysoundio.flush(self.s)
-        self.buffer = pysoundio.ring_buffer_create(self.s, 44100)
+        self.buffer = pysoundio.input_ring_buffer_create(self.s, 44100)
 
     def tearDown(self):
         if self.buffer:

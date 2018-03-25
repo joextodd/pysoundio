@@ -81,6 +81,8 @@ pysoundio__channel_layout_get_default(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__set_read_callback(PyObject *self, PyObject *args);
 static PyObject *
+pysoundio__call_read_callback(PyObject *self, PyObject *args);
+static PyObject *
 pysoundio__instream_create(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__instream_destroy(PyObject *self, PyObject *args);
@@ -105,7 +107,9 @@ pysoundio__outstream_start(PyObject *self, PyObject *args);
  * Ring Buffer API
  */
 static PyObject *
-pysoundio__ring_buffer_create(PyObject *self, PyObject *args);
+pysoundio__input_ring_buffer_create(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__output_ring_buffer_create(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__ring_buffer_destroy(PyObject *self, PyObject *args);
 static PyObject *

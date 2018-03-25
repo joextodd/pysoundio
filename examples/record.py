@@ -13,35 +13,41 @@ import time
 import soundfile as sf
 from pysoundio import (
     PySoundIo,
-    SoundIoFormatFloat32LE
+    SoundIoFormatFloat32LE,
+    SoundIoBackendDummy
 )
 
 
 class Record(object):
 
     def __init__(self, outfile, backend=None,
-                 input_device=None, output_device=None,
+                 input_device=None,
                  sample_rate=None, format=None, channels=None):
-        self.pysoundio = PySoundIo(backend=backend)
-        self.instream = self.pysoundio.start_input_stream(
+        self.pysoundio = PySoundIo(
+            backend=None,
             device_id=input_device,
             channels=channels,
             sample_rate=sample_rate,
             format=SoundIoFormatFloat32LE,
-            callback=self.callback
+            block_size=4096,
+            read_callback=self.callback
         )
-        self.wav_file = sf.SoundFile(
-            outfile, mode='w', channels=channels,
-            samplerate=sample_rate)
+        self.pysoundio.get_default_input_device()
+        self.pysoundio.start_input_stream()
+
+        # self.wav_file = sf.SoundFile(
+        #     outfile, mode='w', channels=channels,
+        #     samplerate=sample_rate)
+        self.wav_file = open('out.wav', 'wb')
 
     def close(self):
         self.wav_file.close()
-        self.instream.close()
         self.pysoundio.close()
 
     def callback(self, data, length):
-        pass
-        # self.wav_file.buffer_write(data, dtype='f')
+        # self.wav_file.write(data)
+        print(len(data))
+        # self.wav_file.buffer_write(data, dtype='float32')
 
 
 if __name__ == '__main__':
@@ -55,16 +61,15 @@ if __name__ == '__main__':
     parser.add_argument('-s', default=44100, help='Sample rate (optional)')
     parser.add_argument('-c', type=int, default=1, help='Mono or stereo (optional)')
     parser.add_argument('-i', help='Input device id (optional)')
-    parser.add_argument('-o', help='Output device id (optional)')
     args = parser.parse_args()
 
-    record = Record(args.outfile, args.b, args.i, args.o, args.s, args.f, args.c)
+    record = Record(args.outfile, args.b, args.i, args.s, args.f, args.c)
 
-    while True:
-        try:
+    try:
+        while True:
             record.pysoundio.flush()
             time.sleep(1)
-        except KeyboardInterrupt:
-            pass
+    except KeyboardInterrupt:
+        pass
 
     record.close()
