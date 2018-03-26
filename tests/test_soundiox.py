@@ -85,7 +85,7 @@ class TestDeviceAPI(unittest.TestCase):
         self.assertIsNotNone(pysoundio.channel_layout_get_default(2))
 
 
-class InputStreamAPI(unittest.TestCase):
+class TestInputStreamAPI(unittest.TestCase):
 
     def setUp(self):
         self.instream = None
@@ -94,6 +94,7 @@ class InputStreamAPI(unittest.TestCase):
         pysoundio.flush(self.s)
         default_index = pysoundio.default_input_device_index(self.s)
         self.device = pysoundio.get_input_device(self.s, default_index)
+        self.buffer = pysoundio.input_ring_buffer_create(self.s, 44100 * 8)
 
     def tearDown(self):
         if self.instream:
@@ -102,7 +103,7 @@ class InputStreamAPI(unittest.TestCase):
             pysoundio.device_unref(self.device)
         pysoundio.destroy(self.s)
 
-    def callback(self, data, length):
+    def callback(self):
         pass
 
     def setup_stream(self):
@@ -125,7 +126,7 @@ class InputStreamAPI(unittest.TestCase):
         self.assertEqual(pysoundio.instream_start(self.instream), 0)
 
 
-class OutputStream(unittest.TestCase):
+class TestOutputStreamAPI(unittest.TestCase):
 
     def setUp(self):
         self.outstream = None
@@ -142,11 +143,16 @@ class OutputStream(unittest.TestCase):
             pysoundio.device_unref(self.device)
         pysoundio.destroy(self.s)
 
+    def callback(self):
+        pass
+
     def setup_stream(self):
         self.outstream = pysoundio.outstream_create(self.device)
+        pysoundio.set_write_callback(self.callback)
         outstream = ctypes.cast(self.outstream, ctypes.POINTER(pysoundio.SoundIoOutStream))
         outstream.contents.format = pysoundio.SoundIoFormatFloat32LE
         outstream.contents.sample_rate = 44100
+        outstream.contents.software_latency = 0.0
 
     def test_outstream_create(self):
         self.assertIsNotNone(pysoundio.outstream_create(self.device))
@@ -158,10 +164,10 @@ class OutputStream(unittest.TestCase):
     def test_outstream_start(self):
         self.setup_stream()
         pysoundio.outstream_open(self.outstream)
-        # self.assertEqual(pysoundio.outstream_start(self.outstream), 0)
+        self.assertEqual(pysoundio.outstream_start(self.outstream), 0)
 
 
-class RingBufferAPI(unittest.TestCase):
+class TestRingBufferAPI(unittest.TestCase):
 
     def setUp(self):
         self.s = pysoundio.create()
@@ -200,16 +206,13 @@ class RingBufferAPI(unittest.TestCase):
         pysoundio.ring_buffer_advance_write_ptr(self.buffer, 16)
         self.assertEqual(pysoundio.ring_buffer_fill_count(self.buffer), 16)
 
-    def test_ring_buffer_data_written(self):
-        read_ptr = pysoundio.ring_buffer_read_ptr(self.buffer)
+    def test_ring_buffer_write_data(self):
         write_ptr = pysoundio.ring_buffer_write_ptr(self.buffer)
-        self.assertEqual(read_ptr, write_ptr)
-        data = ctypes.create_string_buffer(100)
-        data[0] = b'h'
-        ctypes.memmove(write_ptr, data, ctypes.sizeof(data))
-        pysoundio.ring_buffer_advance_write_ptr(self.buffer, ctypes.sizeof(data));
-        read_data = pysoundio.ring_buffer_read_ptr(self.buffer)
-        # self.assertEqual(b'h', read_data)
+        read_ptr = pysoundio.ring_buffer_read_ptr(self.buffer)
+        self.assertEqual(write_ptr, read_ptr)
+        data = bytes('hello'.encode())
+        ctypes.memmove(write_ptr, data, len(data))
+        pysoundio.ring_buffer_advance_write_ptr(self.buffer, len(data))
 
 
 if __name__ == '__main__':

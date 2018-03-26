@@ -12,9 +12,11 @@ class TestPySoundIo(unittest.TestCase):
 
     def setUp(self):
         self.sio = pysoundio.PySoundIo(
-            backend=pysoundio.SoundIoBackendDummy,
-            sample_rate=44100, format=pysoundio.SoundIoFormatFloat32LE,
-            channels=2)
+            backend=pysoundio.SoundIoBackendDummy)
+        self.sio.channels = 2
+        self.sio.sample_rate = 44100
+        self.sio.format = pysoundio.SoundIoFormatFloat32LE
+        self.sio.block_size = None
 
     def tearDown(self):
         self.sio.close()
@@ -75,10 +77,11 @@ class TestPySoundIo(unittest.TestCase):
         self.sio._open_input_stream()
 
     def test_start_input_stream(self):
-        self.sio.get_default_input_device()
-        stream = self.sio._create_input_stream()
-        self.sio._open_input_stream()
-        self.sio._start_input_stream()
+        self.sio.start_input_stream(
+            sample_rate=44100,
+            format=pysoundio.SoundIoFormatFloat32LE,
+            channels=2)
+        self.assertIsNotNone(self.sio.input_stream)
 
     def test_create_output_stream(self):
         self.sio.get_default_output_device()
@@ -90,68 +93,13 @@ class TestPySoundIo(unittest.TestCase):
         stream = self.sio._create_output_stream()
         self.sio._open_output_stream()
 
-    # def test_start_output_stream(self):
-    #     self.sio.get_default_output_device()
-    #     stream = self.sio._create_output_stream()
-    #     self.sio._open_output_stream()
-    #     self.sio._start_output_stream()
+    def test_start_output_stream(self):
+        self.sio.get_default_output_device()
+        stream = self.sio._create_output_stream()
+        self.sio._open_output_stream()
 
+        pyoutstream = ctypes.cast(stream, ctypes.POINTER(pysoundio.SoundIoOutStream))
+        pyoutstream.contents.format = pysoundio.SoundIoFormatFloat32LE
+        pyoutstream.contents.sample_rate = 44100
 
-# class TestInputStream(unittest.TestCase):
-
-#     def setUp(self):
-#         self.sio = pysoundio.PySoundIo(
-#             backend=pysoundio.SoundIoBackendDummy)
-#         self.stream = pysoundio.InputStream(
-#             self.sio, channels=2, sample_rate=44100,
-#             format=pysoundio.SoundIoFormatFloat32LE)
-
-#     def tearDown(self):
-#         self.stream.close()
-#         self.sio.close()
-
-#     def test_create_ring_buffer(self):
-#         capacity = 44100 * 8
-#         self.assertIsNotNone(self.stream._create_ring_buffer(capacity))
-
-    # def test_create_input_stream(self):
-    #     self.stream._create_input_stream()
-    #     self.assertIsNotNone(self.stream.stream)
-
-#     def test_start_stream(self):
-#         pass
-#         # input_stream = pysoundio.instream_create(self.stream.device)
-#         # instream = ctypes.cast(input_stream, ctypes.POINTER(pysoundio.SoundIoInStream))
-#         # instream.contents.format = pysoundio.SoundIoFormatFloat32LE
-#         # instream.contents.sample_rate = 44100
-#         # pysoundio.instream_open(input_stream)
-#         # capacity = 44100 * 30 * 8
-#         # input_buffer = pysoundio.ring_buffer_create(self.sio._soundio, capacity)
-#         # pysoundio.instream_start(input_stream)
-#         # self.assertIsNotNone(self.stream.start_stream())
-
-
-# class TestOutputStream(unittest.TestCase):
-
-#     def setUp(self):
-#         self.sio = pysoundio.PySoundIo(
-#             backend=pysoundio.SoundIoBackendDummy)
-#         self.stream = pysoundio.OutputStream(
-#             self.sio, channels=2, sample_rate=44100,
-#             format=pysoundio.SoundIoFormatFloat32LE,
-#             block_size=4096)
-
-#     def tearDown(self):
-#         self.stream.close()
-#         self.sio.close()
-
-#     def test_create_ring_buffer(self):
-#         capacity = 44100 * 8
-#         self.assertIsNotNone(self.stream._create_ring_buffer(capacity))
-
-    # def test_create_output_stream(self):
-    #     self.stream._create_output_stream()
-    #     self.assertIsNotNone(self.stream.stream)
-
-#     # def test_start_stream(self):
-#         # self.stream.start_stream()
+        self.sio._start_output_stream()

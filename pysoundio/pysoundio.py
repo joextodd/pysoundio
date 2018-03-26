@@ -8,12 +8,16 @@ It is suitable for real-time and consumer software.
 -> https://libsound.io
 
 TODO:
-    - Working examples
+    - Sine example
 
     - Add all function, structure definitions
     - Add enums to constants
     - Autoset formats and sample rates if not specified
+    - Fix Python2 dealloc errors
+    - Publish
     - Docs
+    - TravisCI
+    - Valgrind
 """
 import logging
 import threading
@@ -45,14 +49,15 @@ class _InputProcessingThread(threading.Thread):
     def __init__(self, parent, *args, **kwargs):
         self.buffer = parent.input_buffer
         self.callback = parent.read_callback
-        self.block_size = parent.block_size
+        self.bytes_per_frame = parent.input_bytes_per_frame
         super(_InputProcessingThread, self).__init__(*args, **kwargs)
 
     def run(self):
         """ Callback with data """
         fill_bytes = soundio.ring_buffer_fill_count(self.buffer)
         read_buf = soundio.ring_buffer_read_ptr(self.buffer)
-        self.callback(data=read_buf, length=fill_bytes)
+        if self.callback:
+            self.callback(data=read_buf, length=fill_bytes / self.bytes_per_frame)
         soundio.ring_buffer_advance_read_ptr(self.buffer, fill_bytes)
 
 
@@ -60,27 +65,24 @@ class _OutputProcessingThread(threading.Thread):
 
     def __init__(self, parent, *args, **kwargs):
         self.buffer = parent.input_buffer
-        self.callback = parent.read_callback
+        self.callback = parent.write_callback
+        self.bytes_per_frame = parent.output_bytes_per_frame
         super(_OutputProcessingThread, self).__init__(*args, **kwargs)
 
     def run(self):
         """ Callback to fill data """
-        pass
+        free_bytes = soundio.ring_buffer_free_count(self.buffer)
+        write_buf = soundio.ring_buffer_write_ptr(self.buffer)
+        # print(type(write_buf))
+        if self.callback:
+            self.callback(data=write_buf, length=free_bytes / self.bytes_per_frame)
+        soundio.ring_buffer_advance_write_ptr(self.buffer, free_bytes)
 
 
 class PySoundIo(object):
 
-    def __init__(self, backend=None, device_id=None,
-                 sample_rate=None, format=None,
-                 block_size=None, channels=None,
-                 read_callback=None):
+    def __init__(self, backend=None):
         self.backend = backend
-        self.device_id = device_id
-        self.sample_rate = sample_rate
-        self.format = format
-        self.block_size = block_size
-        self.channels = channels
-        self.read_callback = read_callback
 
         self.input_device = None
         self.output_device = None
@@ -88,6 +90,8 @@ class PySoundIo(object):
         self.output_stream = None
         self.input_buffer = None
         self.output_buffer = None
+        self.read_callback = None
+        self.write_callback = None
 
         self._soundio = soundio.create()
         if backend:
@@ -96,33 +100,17 @@ class PySoundIo(object):
             self._call(soundio.connect, self._soundio)
         self.flush()
 
-        # if device_id:
-        #     self.device_id = device_id
-        #     self.device = self.get_input_device(self.device_id)
-        # else:
-        #     self.device = self._soundio.get_default_input_device()
-
-        # pydevice = _ctypes.cast(self.device, _ctypes.POINTER(SoundIoDevice))
-        # print('Input Device: %s' % pydevice.contents.name.decode())
-        # self._soundio.sort_channel_layouts(self.device)
-
-        # if not self._soundio.supports_sample_rate(self.device, self.sample_rate):
-        #     raise PySoundIoError('Invalid sample rate: %d' % self.sample_rate)
-
-        # if not self._soundio.supports_format(self.device, self.format):
-        #     raise PySoundIoError('Invalid format: %s interleaved' %
-        #     (soundio.format_string(self.format).decode()))
-
     @property
     def version(self):
         """
-        Return version string
+        Return version string for libsoundio
         """
         return soundio.version_string()
 
     def close(self):
         """
-        Close libsoundio connection
+        Clean up allocated memory
+        Close libsoundio connections
         """
         if self.input_stream:
             soundio.instream_destroy(self.input_stream)
@@ -250,7 +238,7 @@ class PySoundIo(object):
             device = soundio.get_input_device(self._soundio, i)
             pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
             input_devices.append({
-                'id': pydevice.contents.id, 'name': pydevice.contents.name,
+                'id': pydevice.contents.id.decode(), 'name': pydevice.contents.name.decode(),
                 'is_raw': pydevice.contents.is_raw, 'is_default': default_input == i
                 # TODO: Add more parameters
             })
@@ -260,7 +248,7 @@ class PySoundIo(object):
             device = soundio.get_output_device(self._soundio, i)
             pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
             output_devices.append({
-                'id': pydevice.contents.id, 'name': pydevice.contents.name,
+                'id': pydevice.contents.id.decode(), 'name': pydevice.contents.name.decode(),
                 'is_raw': pydevice.contents.is_raw, 'is_default': default_output == i
                 # TODO: Add more parameters
             })
@@ -426,14 +414,40 @@ class PySoundIo(object):
         if self.error_callback:
             self.error_callback(stream, err)
 
-    def start_input_stream(self):
+    def start_input_stream(self, device_id=None,
+                           sample_rate=None, format=None,
+                           block_size=None, channels=None,
+                           read_callback=None):
         """
         Creates input stream, and sets parameters. Then allocates
         a ring buffer and starts the stream.
         """
+        self.sample_rate = sample_rate
+        self.format = format
+        self.block_size = block_size
+        self.channels = channels
+        self.read_callback = read_callback
+
+        if device_id:
+            self.input_device = self.get_input_device(device_id)
+        else:
+            self.input_device = self.get_default_input_device()
+
+        pydevice = _ctypes.cast(self.input_device, _ctypes.POINTER(SoundIoDevice))
+        LOGGER.info('Input Device: %s' % pydevice.contents.name.decode())
+        self.sort_channel_layouts(self.input_device)
+
+        if not self.supports_sample_rate(self.input_device, self.sample_rate):
+            raise PySoundIoError('Invalid sample rate: %d' % self.sample_rate)
+
+        if not self.supports_format(self.input_device, self.format):
+            raise PySoundIoError('Invalid format: %s interleaved' %
+            (soundio.format_string(self.format).decode()))
+
         self._create_input_stream()
         self._open_input_stream()
         pystream = _ctypes.cast(self.input_stream, _ctypes.POINTER(SoundIoInStream))
+        self.input_bytes_per_frame = pystream.contents.bytes_per_frame
         capacity = (DEFAULT_RING_BUFFER_DURATION *
             pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
         self._create_input_ring_buffer(capacity)
@@ -448,12 +462,12 @@ class PySoundIo(object):
         Raises:
             PySoundIoError if memory could not be allocated
         """
-        self.output_stream = soundio.instream_create(self.output_device)
+        self.output_stream = soundio.outstream_create(self.output_device)
         if not self.output_stream:
             raise PySoundIoError('Could not create output stream')
 
         pyoutstream = _ctypes.cast(self.output_stream, _ctypes.POINTER(SoundIoOutStream))
-        # soundio.set_write_callback(self._write_callback)
+        soundio.set_write_callback(self._write_callback)
 
         layout = self._get_default_layout(self.channels)
         pylayout = _ctypes.cast(layout, _ctypes.POINTER(SoundIoChannelLayout))
@@ -488,8 +502,7 @@ class PySoundIo(object):
         """
         Internal write callback.
         """
-        self.thread = _OutputProcessingThread(parent=self)
-        self.thread.start()
+        _OutputProcessingThread(parent=self).start()
 
     def _underflow_callback(self, stream):
         """
@@ -498,6 +511,45 @@ class PySoundIo(object):
         """
         if self.underflow_callback:
             self.underflow_callback(stream)
+
+    def start_output_stream(self, device_id=None,
+                           sample_rate=None, format=None,
+                           block_size=None, channels=None,
+                           write_callback=None):
+        """
+        Creates output stream, and sets parameters. Then allocates
+        a ring buffer and starts the stream.
+        """
+        self.sample_rate = sample_rate
+        self.format = format
+        self.block_size = block_size
+        self.channels = channels
+        self.write_callback = write_callback
+
+        if device_id:
+            self.output_device = self.get_output_device(device_id)
+        else:
+            self.output_device = self.get_default_output_device()
+
+        pydevice = _ctypes.cast(self.output_device, _ctypes.POINTER(SoundIoDevice))
+        LOGGER.info('Input Device: %s' % pydevice.contents.name.decode())
+        self.sort_channel_layouts(self.output_device)
+
+        if not self.supports_sample_rate(self.output_device, self.sample_rate):
+            raise PySoundIoError('Invalid sample rate: %d' % self.sample_rate)
+
+        if not self.supports_format(self.output_device, self.format):
+            raise PySoundIoError('Invalid format: %s interleaved' %
+            (soundio.format_string(self.format).decode()))
+
+        self._create_output_stream()
+        self._open_output_stream()
+        pystream = _ctypes.cast(self.output_stream, _ctypes.POINTER(SoundIoOutStream))
+        self.output_bytes_per_frame = pystream.contents.bytes_per_frame
+        capacity = (DEFAULT_RING_BUFFER_DURATION *
+            pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
+        self._create_output_ring_buffer(capacity)
+        self._start_output_stream()
 
 
 class _BaseStream(object):
@@ -560,7 +612,8 @@ class InputStream(_BaseStream):
             self.device = self._soundio.get_default_input_device()
 
         pydevice = _ctypes.cast(self.device, _ctypes.POINTER(SoundIoDevice))
-        print('Input Device: %s' % pydevice.contents.name.decode())
+        LOGGER.info('Input Device: %s' % pydevice.contents.name.decode())
+
         self._soundio.sort_channel_layouts(self.device)
 
         if not self._soundio.supports_sample_rate(self.device, self.sample_rate):
