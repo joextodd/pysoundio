@@ -81,8 +81,6 @@ pysoundio__channel_layout_get_default(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__set_read_callback(PyObject *self, PyObject *args);
 static PyObject *
-pysoundio__call_read_callback(PyObject *self, PyObject *args);
-static PyObject *
 pysoundio__instream_create(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__instream_destroy(PyObject *self, PyObject *args);
@@ -94,6 +92,8 @@ pysoundio__instream_start(PyObject *self, PyObject *args);
 /**
  * Output Stream API
  */
+static PyObject *
+pysoundio__set_write_callback(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__outstream_create(PyObject *self, PyObject *args);
 static PyObject *

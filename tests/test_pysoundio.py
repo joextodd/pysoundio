@@ -80,6 +80,22 @@ class TestPySoundIo(unittest.TestCase):
         self.sio._open_input_stream()
         self.sio._start_input_stream()
 
+    def test_create_output_stream(self):
+        self.sio.get_default_output_device()
+        stream = self.sio._create_output_stream()
+        self.assertIsNotNone(stream)
+
+    def test_open_output_stream(self):
+        self.sio.get_default_output_device()
+        stream = self.sio._create_output_stream()
+        self.sio._open_output_stream()
+
+    # def test_start_output_stream(self):
+    #     self.sio.get_default_output_device()
+    #     stream = self.sio._create_output_stream()
+    #     self.sio._open_output_stream()
+    #     self.sio._start_output_stream()
+
 
 # class TestInputStream(unittest.TestCase):
 
@@ -98,9 +114,9 @@ class TestPySoundIo(unittest.TestCase):
 #         capacity = 44100 * 8
 #         self.assertIsNotNone(self.stream._create_ring_buffer(capacity))
 
-#     def test_create_input_stream(self):
-#         self.stream._create_input_stream()
-#         self.assertIsNotNone(self.stream.stream)
+    # def test_create_input_stream(self):
+    #     self.stream._create_input_stream()
+    #     self.assertIsNotNone(self.stream.stream)
 
 #     def test_start_stream(self):
 #         pass

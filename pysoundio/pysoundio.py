@@ -8,14 +8,11 @@ It is suitable for real-time and consumer software.
 -> https://libsound.io
 
 TODO:
-    - Get / put data into ring buffers
     - Working examples
 
     - Add all function, structure definitions
     - Add enums to constants
     - Autoset formats and sample rates if not specified
-    - Tests
-    - TravisCI
     - Docs
 """
 import logging
@@ -54,17 +51,21 @@ class _InputProcessingThread(threading.Thread):
     def run(self):
         """ Callback with data """
         fill_bytes = soundio.ring_buffer_fill_count(self.buffer)
-        if self.block_size:
-            if fill_bytes > self.block_size:
-                read_buf = soundio.ring_buffer_read_ptr(self.buffer)
-                print(len(read_buf))
-                print(read_buf)
-                self.callback(data=read_buf, length=self.block_size)
-                soundio.ring_buffer_advance_read_ptr(self.buffer, self.block_size)
-        else:
-            read_buf = soundio.ring_buffer_read_ptr(self.buffer)
-            self.callback(data=read_buf, length=fill_bytes)
-            soundio.ring_buffer_advance_read_ptr(self.buffer, fill_bytes)
+        read_buf = soundio.ring_buffer_read_ptr(self.buffer)
+        self.callback(data=read_buf, length=fill_bytes)
+        soundio.ring_buffer_advance_read_ptr(self.buffer, fill_bytes)
+
+
+class _OutputProcessingThread(threading.Thread):
+
+    def __init__(self, parent, *args, **kwargs):
+        self.buffer = parent.input_buffer
+        self.callback = parent.read_callback
+        super(_OutputProcessingThread, self).__init__(*args, **kwargs)
+
+    def run(self):
+        """ Callback to fill data """
+        pass
 
 
 class PySoundIo(object):
@@ -407,8 +408,7 @@ class PySoundIo(object):
         """
         Internal read callback.
         """
-        self.thread = _InputProcessingThread(parent=self)
-        self.thread.start()
+        _InputProcessingThread(parent=self).start()
 
     def _overflow_callback(self, stream):
         """
@@ -427,14 +427,77 @@ class PySoundIo(object):
             self.error_callback(stream, err)
 
     def start_input_stream(self):
+        """
+        Creates input stream, and sets parameters. Then allocates
+        a ring buffer and starts the stream.
+        """
         self._create_input_stream()
         self._open_input_stream()
         pystream = _ctypes.cast(self.input_stream, _ctypes.POINTER(SoundIoInStream))
         capacity = (DEFAULT_RING_BUFFER_DURATION *
             pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
-        print(capacity)
         self._create_input_ring_buffer(capacity)
         self._start_input_stream()
+
+    def _create_output_stream(self):
+        """
+        Allocates memory and sets defaults for output stream
+
+        Returns: SoundIoInStream instream object
+
+        Raises:
+            PySoundIoError if memory could not be allocated
+        """
+        self.output_stream = soundio.instream_create(self.output_device)
+        if not self.output_stream:
+            raise PySoundIoError('Could not create output stream')
+
+        pyoutstream = _ctypes.cast(self.output_stream, _ctypes.POINTER(SoundIoOutStream))
+        # soundio.set_write_callback(self._write_callback)
+
+        layout = self._get_default_layout(self.channels)
+        pylayout = _ctypes.cast(layout, _ctypes.POINTER(SoundIoChannelLayout))
+        pyoutstream.contents.layout = pylayout.contents
+
+        pyoutstream.contents.format = self.format
+        pyoutstream.contents.sample_rate = self.sample_rate
+        if self.block_size:
+            pyoutstream.contents.software_latency = float(self.block_size) / self.sample_rate
+
+        return self.output_stream
+
+    def _open_output_stream(self):
+        """
+        Open an output stream..
+
+        Raises:
+            PySoundIoError if there is an error starting stream.
+        """
+        self._call(soundio.outstream_open, self.output_stream)
+
+    def _start_output_stream(self):
+        """
+        Start an output stream running.
+
+        Raises:
+            PySoundIoError if there is an error starting stream.
+        """
+        self._call(soundio.outstream_start, self.output_stream)
+
+    def _write_callback(self):
+        """
+        Internal write callback.
+        """
+        self.thread = _OutputProcessingThread(parent=self)
+        self.thread.start()
+
+    def _underflow_callback(self, stream):
+        """
+        Internal underflow callback, which calls the external
+        underflow callback if defined.
+        """
+        if self.underflow_callback:
+            self.underflow_callback(stream)
 
 
 class _BaseStream(object):

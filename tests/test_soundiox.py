@@ -102,10 +102,11 @@ class InputStreamAPI(unittest.TestCase):
             pysoundio.device_unref(self.device)
         pysoundio.destroy(self.s)
 
-    def callback(self):
+    def callback(self, data, length):
         pass
 
     def setup_stream(self):
+        pysoundio.set_read_callback(self.callback)
         self.instream = pysoundio.instream_create(self.device)
         instream = ctypes.cast(self.instream, ctypes.POINTER(pysoundio.SoundIoInStream))
         instream.contents.format = pysoundio.SoundIoFormatFloat32LE
@@ -157,7 +158,6 @@ class OutputStream(unittest.TestCase):
     def test_outstream_start(self):
         self.setup_stream()
         pysoundio.outstream_open(self.outstream)
-        # TODO: Needs a ring buffer
         # self.assertEqual(pysoundio.outstream_start(self.outstream), 0)
 
 
@@ -183,8 +183,9 @@ class RingBufferAPI(unittest.TestCase):
         self.assertNotEqual(ptr, 0)
 
     def test_ring_buffer_advance_read_ptr(self):
-        # TODO: Check pointer has advanced
+        count = pysoundio.ring_buffer_free_count(self.buffer)
         pysoundio.ring_buffer_advance_read_ptr(self.buffer, 16)
+        self.assertEqual(pysoundio.ring_buffer_free_count(self.buffer), count + 16)
 
     def test_ring_buffer_write_ptr(self):
         ptr = pysoundio.ring_buffer_write_ptr(self.buffer)
@@ -195,8 +196,20 @@ class RingBufferAPI(unittest.TestCase):
         self.assertNotEqual(pysoundio.ring_buffer_free_count(self.buffer), 0)
 
     def test_ring_buffer_advance_write_ptr(self):
-        # TODO: Check pointer has advanced
+        self.assertEqual(pysoundio.ring_buffer_fill_count(self.buffer), 0)
         pysoundio.ring_buffer_advance_write_ptr(self.buffer, 16)
+        self.assertEqual(pysoundio.ring_buffer_fill_count(self.buffer), 16)
+
+    def test_ring_buffer_data_written(self):
+        read_ptr = pysoundio.ring_buffer_read_ptr(self.buffer)
+        write_ptr = pysoundio.ring_buffer_write_ptr(self.buffer)
+        self.assertEqual(read_ptr, write_ptr)
+        data = ctypes.create_string_buffer(100)
+        data[0] = b'h'
+        ctypes.memmove(write_ptr, data, ctypes.sizeof(data))
+        pysoundio.ring_buffer_advance_write_ptr(self.buffer, ctypes.sizeof(data));
+        read_data = pysoundio.ring_buffer_read_ptr(self.buffer)
+        # self.assertEqual(b'h', read_data)
 
 
 if __name__ == '__main__':

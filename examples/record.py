@@ -2,7 +2,7 @@
 record.py
 
 Stream the default input device and save to wav file.
-Supports specifying backend, device, sample rate, format, blocksize.
+Supports specifying backend, device, sample rate, format.
 
 Requires pysoundfile
     pip install pysoundfile
@@ -23,31 +23,26 @@ class Record(object):
     def __init__(self, outfile, backend=None,
                  input_device=None,
                  sample_rate=None, format=None, channels=None):
+        self.wav_file = sf.SoundFile(
+            outfile, mode='w', channels=channels,
+            samplerate=sample_rate)
         self.pysoundio = PySoundIo(
             backend=None,
             device_id=input_device,
             channels=channels,
             sample_rate=sample_rate,
             format=SoundIoFormatFloat32LE,
-            block_size=4096,
             read_callback=self.callback
         )
         self.pysoundio.get_default_input_device()
         self.pysoundio.start_input_stream()
 
-        # self.wav_file = sf.SoundFile(
-        #     outfile, mode='w', channels=channels,
-        #     samplerate=sample_rate)
-        self.wav_file = open('out.wav', 'wb')
-
     def close(self):
-        self.wav_file.close()
         self.pysoundio.close()
+        self.wav_file.close()
 
     def callback(self, data, length):
-        # self.wav_file.write(data)
-        print(len(data))
-        # self.wav_file.buffer_write(data, dtype='float32')
+        self.wav_file.buffer_write(data, dtype='float32')
 
 
 if __name__ == '__main__':
