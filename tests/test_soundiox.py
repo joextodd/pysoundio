@@ -135,6 +135,7 @@ class TestOutputStreamAPI(unittest.TestCase):
         pysoundio.flush(self.s)
         default_index = pysoundio.default_output_device_index(self.s)
         self.device = pysoundio.get_output_device(self.s, default_index)
+        self.buffer = pysoundio.input_ring_buffer_create(self.s, 44100 * 8)
 
     def tearDown(self):
         if self.outstream:
@@ -194,9 +195,8 @@ class TestRingBufferAPI(unittest.TestCase):
         self.assertEqual(pysoundio.ring_buffer_free_count(self.buffer), count + 16)
 
     def test_ring_buffer_write_ptr(self):
-        ptr = pysoundio.ring_buffer_write_ptr(self.buffer)
-        self.assertIsInstance(ptr, bytes)
-        self.assertNotEqual(ptr, 0)
+        data = bytes(b'\x01\x02\x03\x04')
+        pysoundio.ring_buffer_write_ptr(self.buffer, data, len(data))
 
     def test_ring_buffer_free_count(self):
         self.assertNotEqual(pysoundio.ring_buffer_free_count(self.buffer), 0)
@@ -205,14 +205,6 @@ class TestRingBufferAPI(unittest.TestCase):
         self.assertEqual(pysoundio.ring_buffer_fill_count(self.buffer), 0)
         pysoundio.ring_buffer_advance_write_ptr(self.buffer, 16)
         self.assertEqual(pysoundio.ring_buffer_fill_count(self.buffer), 16)
-
-    def test_ring_buffer_write_data(self):
-        write_ptr = pysoundio.ring_buffer_write_ptr(self.buffer)
-        read_ptr = pysoundio.ring_buffer_read_ptr(self.buffer)
-        self.assertEqual(write_ptr, read_ptr)
-        data = bytes('hello'.encode())
-        ctypes.memmove(write_ptr, data, len(data))
-        pysoundio.ring_buffer_advance_write_ptr(self.buffer, len(data))
 
 
 if __name__ == '__main__':

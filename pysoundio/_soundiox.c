@@ -245,10 +245,10 @@ static int min_int(int a, int b) {
 
 #if PY_MAJOR_VERSION==2
 #define FORMAT_DATA_READ_ID     "s#"
-#define FORMAT_DATA_WRITE_ID    "s"
+#define FORMAT_DATA_WRITE_ID    "Osi"
 #else
 #define FORMAT_DATA_READ_ID     "y#"
-#define FORMAT_DATA_WRITE_ID    "y"
+#define FORMAT_DATA_WRITE_ID    "Oyi"
 #endif
 
 
@@ -808,14 +808,14 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
     }
     soundio_ring_buffer_advance_read_ptr(rc->output_buffer, read_count * outstream->bytes_per_frame);
 
-    PyGILState_STATE state = PyGILState_Ensure();
+    // PyGILState_STATE state = PyGILState_Ensure();
 
-    if (rc->write_callback) {
-        PyObject *result = PyObject_CallObject(rc->write_callback, NULL);
-        Py_XDECREF(result);
-    }
+    // if (rc->write_callback) {
+    //     PyObject *result = PyObject_CallObject(rc->write_callback, NULL);
+    //     Py_XDECREF(result);
+    // }
 
-    PyGILState_Release(state);
+    // PyGILState_Release(state);
 }
 
 
@@ -1014,16 +1014,22 @@ pysoundio__ring_buffer_advance_read_ptr(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__ring_buffer_write_ptr(PyObject *self, PyObject *args)
 {
-    PyObject *data;
+    PyObject *pbuf;
+    char *data;
+    int length;
 
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, FORMAT_DATA_WRITE_ID, &pbuf, &data, &length))
         return NULL;
 
-    struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
+    struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(pbuf);
     char *ptr = soundio_ring_buffer_write_ptr(buffer);
 
+    for (int i = 0; i < length; i++) {
+        ptr[i] = data[i];
+    }
+
     // Py_DECREF(buffer);
-    return Py_BuildValue(FORMAT_DATA_WRITE_ID, ptr);
+    Py_RETURN_NONE;
 }
 
 static PyObject *
