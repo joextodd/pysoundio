@@ -13,11 +13,10 @@ TODO:
     - Add all function, structure definitions
     - Add enums to constants
     - Autoset formats and sample rates if not specified
-    - Fix Python2 dealloc errors
+    - Fix memory leaks
     - Publish
     - Docs
     - TravisCI
-    - Valgrind
 """
 import logging
 import threading
@@ -64,18 +63,18 @@ class _InputProcessingThread(threading.Thread):
 class _OutputProcessingThread(threading.Thread):
 
     def __init__(self, parent, *args, **kwargs):
-        self.buffer = parent.input_buffer
+        self.buffer = parent.output_buffer
         self.callback = parent.write_callback
-        self.block_size = parent.block_size
+        self.block_size = 4096
         super(_OutputProcessingThread, self).__init__(*args, **kwargs)
 
     def run(self):
         """ Callback to fill data """
-        data = bytearray(b'\x01' * self.block_size)
+        data = bytearray(b'\x01' * 4096 * 4)
         free_bytes = soundio.ring_buffer_free_count(self.buffer)
-        if self.callback:
-            self.callback(data=data, length=free_bytes / self.bytes_per_frame)
-        soundio.ring_buffer_write_ptr(self.buffer, bytes(data), len(data))
+        if self.callback and free_bytes >= len(data):
+            self.callback(data=data, length=4096)
+        soundio.ring_buffer_write_ptr(self.buffer, str(data), len(data))
         soundio.ring_buffer_advance_write_ptr(self.buffer, len(data))
 
 
@@ -444,16 +443,17 @@ class PySoundIo(object):
 
         if not self.supports_format(self.input_device, self.format):
             raise PySoundIoError('Invalid format: %s interleaved' %
-            (soundio.format_string(self.format).decode()))
+                                 (soundio.format_string(self.format).decode()))
 
         self._create_input_stream()
         self._open_input_stream()
         pystream = _ctypes.cast(self.input_stream, _ctypes.POINTER(SoundIoInStream))
         self.input_bytes_per_frame = pystream.contents.bytes_per_frame
         capacity = (DEFAULT_RING_BUFFER_DURATION *
-            pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
+                    pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
         self._create_input_ring_buffer(capacity)
         self._start_input_stream()
+        self.flush()
 
     def _create_output_stream(self):
         """
@@ -518,9 +518,9 @@ class PySoundIo(object):
             self.underflow_callback(stream)
 
     def start_output_stream(self, device_id=None,
-                           sample_rate=None, fmt=None,
-                           block_size=None, channels=None,
-                           write_callback=None):
+                            sample_rate=None, fmt=None,
+                            block_size=None, channels=None,
+                            write_callback=None):
         """
         Creates output stream, and sets parameters. Then allocates
         a ring buffer and starts the stream.
@@ -538,23 +538,25 @@ class PySoundIo(object):
 
         pydevice = _ctypes.cast(self.output_device, _ctypes.POINTER(SoundIoDevice))
         LOGGER.info('Input Device: %s' % pydevice.contents.name.decode())
-        # self.sort_channel_layouts(self.output_device)
+        self.sort_channel_layouts(self.output_device)
 
         if not self.supports_sample_rate(self.output_device, self.sample_rate):
             raise PySoundIoError('Invalid sample rate: %d' % self.sample_rate)
 
         if not self.supports_format(self.output_device, self.format):
             raise PySoundIoError('Invalid format: %s interleaved' %
-            (soundio.format_string(self.format).decode()))
+                                 (soundio.format_string(self.format).decode()))
 
         self._create_output_stream()
         self._open_output_stream()
         pystream = _ctypes.cast(self.output_stream, _ctypes.POINTER(SoundIoOutStream))
         self.output_bytes_per_frame = pystream.contents.bytes_per_frame
         capacity = (DEFAULT_RING_BUFFER_DURATION *
-            pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
+                    pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
+        print(pystream.contents.layout.channels)
         self._create_output_ring_buffer(capacity)
         self._start_output_stream()
+        self.flush()
 
 
 class _BaseStream(object):

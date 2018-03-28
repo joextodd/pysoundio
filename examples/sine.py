@@ -5,10 +5,13 @@ Play a sine wave over the default output device.
 Supports specifying backend, device, sample rate, block size.
 
 """
+import array as ar
 import argparse
-import ctypes
+import math
+import struct
 import time
 
+import soundfile as sf
 from pysoundio import (
     PySoundIo,
     SoundIoFormatFloat32LE,
@@ -22,37 +25,37 @@ class Player(object):
     def __init__(self, backend=None, output_device=None,
                  sample_rate=None, block_size=None, channels=None):
         self.pysoundio = PySoundIo(backend=None)
-        self.pysoundio.channels = channels
-        self.pysoundio.sample_rate = sample_rate
-        self.pysoundio.format = SoundIoFormatFloat32LE
-        self.pysoundio.block_size = block_size
 
-        set_write_callback(self.callback)
-        self.pysoundio.get_default_output_device()
-        stream = self.pysoundio._create_output_stream()
-        self.pysoundio._open_output_stream()
-        pystream = ctypes.cast(stream, ctypes.POINTER(SoundIoOutStream))
-        self.output_bytes_per_frame = pystream.contents.bytes_per_frame
-        capacity = (30 *
-            pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
-        self.pysoundio._create_output_ring_buffer(capacity)
-        self.pysoundio._start_output_stream()
+        self.pysoundio.start_output_stream(
+            device_id=output_device,
+            channels=1,
+            sample_rate=44100,
+            block_size=4096,
+            fmt=SoundIoFormatFloat32LE,
+            write_callback=self.callback
+        )
+        self.wav_file = sf.SoundFile(
+            'out.wav', mode='w', channels=1,
+            samplerate=sample_rate
+        )
 
-        # self.pysoundio.start_output_stream(
-        #     device_id=output_device,
-        #     channels=channels,
-        #     sample_rate=sample_rate,
-        #     block_size=block_size,
-        #     format=SoundIoFormatFloat32LE,
-        #     write_callback=self.callback
-        # )
+        self.pitch = 440.0
+        self.seconds_offset = 0.0
+        self.radians_per_second = self.pitch * 2.0 * math.pi
+        self.seconds_per_frame = 1.0 / sample_rate
 
     def close(self):
         self.pysoundio.close()
+        self.wav_file.close()
 
     def callback(self, data, length):
-        print('hello')
-
+        indata = ar.array('f', [0.0] * length)
+        for i in range(0, length):
+            indata[i] = math.sin((self.seconds_offset + i * self.seconds_per_frame) * self.radians_per_second)
+        # struct.pack('<f', data, 0, indata)
+        data[:] = indata.tostring()
+        self.wav_file.buffer_write(indata, dtype='float32')
+        self.seconds_offset += self.seconds_per_frame * length
 
 
 if __name__ == '__main__':

@@ -248,7 +248,7 @@ static int min_int(int a, int b) {
 #define FORMAT_DATA_WRITE_ID    "Osi"
 #else
 #define FORMAT_DATA_READ_ID     "y#"
-#define FORMAT_DATA_WRITE_ID    "Oyi"
+#define FORMAT_DATA_WRITE_ID    "Osi"
 #endif
 
 
@@ -268,7 +268,6 @@ pysoundio__create(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Py_XINCREF(soundio);
     return PyLong_FromVoidPtr(soundio);
 }
 
@@ -283,7 +282,6 @@ pysoundio__destroy(PyObject *self, PyObject *args)
     struct SoundIo *soundio = PyLong_AsVoidPtr(data);
 
     soundio_destroy(soundio);
-    // Py_XDECREF(soundio);
     Py_RETURN_NONE;
 }
 
@@ -302,7 +300,7 @@ pysoundio__connect(PyObject *self, PyObject *args)
         PyErr_SetString(PySoundIoError, soundio_strerror(err));
         return NULL;
     }
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     return Py_BuildValue("i", err);
 }
 
@@ -322,7 +320,7 @@ pysoundio__connect_backend(PyObject *self, PyObject *args)
         PyErr_SetString(PySoundIoError, soundio_strerror(err));
         return NULL;
     }
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     return Py_BuildValue("i", err);
 }
 
@@ -337,7 +335,7 @@ pysoundio__flush(PyObject *self, PyObject *args)
     struct SoundIo *soundio = PyLong_AsVoidPtr(data);
 
     soundio_flush_events(soundio);
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     Py_RETURN_NONE;
 }
 
@@ -395,7 +393,7 @@ pysoundio__get_output_device_count(PyObject *self, PyObject *args)
     struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     int output_count = soundio_output_device_count(soundio);
 
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     return Py_BuildValue("i", output_count);
 }
 
@@ -410,7 +408,7 @@ pysoundio__get_input_device_count(PyObject *self, PyObject *args)
     struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     int input_count = soundio_input_device_count(soundio);
 
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     return Py_BuildValue("i", input_count);
 }
 
@@ -425,7 +423,7 @@ pysoundio__default_input_device_index(PyObject *self, PyObject *args)
     struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     int input_index = soundio_default_input_device_index(soundio);
 
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     return Py_BuildValue("i", input_index);
 }
 
@@ -440,7 +438,7 @@ pysoundio__default_output_device_index(PyObject *self, PyObject *args)
     struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     int output_index = soundio_default_output_device_index(soundio);
 
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     return Py_BuildValue("i", output_index);
 }
 
@@ -461,7 +459,7 @@ pysoundio__get_input_device(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     return PyLong_FromVoidPtr(device);
 }
 
@@ -482,7 +480,7 @@ pysoundio__get_output_device(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Py_DECREF(soundio);
+    Py_DECREF(soundio);
     return PyLong_FromVoidPtr(device);
 }
 
@@ -497,7 +495,7 @@ pysoundio__device_unref(PyObject *self, PyObject *args)
     struct SoundIoDevice *device = PyLong_AsVoidPtr(data);
 
     soundio_device_unref(device);
-    // Py_XDECREF(device);
+    Py_XDECREF(device);
     Py_RETURN_NONE;
 }
 
@@ -617,14 +615,12 @@ read_callback(struct SoundIoInStream *instream, int frame_count_min, int frame_c
     int advance_bytes = write_frames * instream->bytes_per_frame;
     soundio_ring_buffer_advance_write_ptr(rc->input_buffer, advance_bytes);
 
-    PyGILState_STATE state = PyGILState_Ensure();
-
     if (rc->read_callback) {
+        PyGILState_STATE state = PyGILState_Ensure();
         PyObject *result = PyObject_CallObject(rc->read_callback, NULL);
         Py_XDECREF(result);
+        PyGILState_Release(state);
     }
-
-    PyGILState_Release(state);
 }
 
 static void
@@ -637,7 +633,6 @@ overflow_callback(struct SoundIoInStream *instream)
 static PyObject *
 pysoundio__set_read_callback(PyObject *self, PyObject *args)
 {
-    PyObject *result = NULL;
     PyObject *temp;
 
     if (PyArg_ParseTuple(args, "O", &temp)) {
@@ -650,7 +645,7 @@ pysoundio__set_read_callback(PyObject *self, PyObject *args)
         rc.read_callback = temp;
         Py_RETURN_NONE;
     }
-    return result;
+    return NULL;
 }
 
 static PyObject *
@@ -737,7 +732,6 @@ pysoundio__instream_start(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__set_write_callback(PyObject *self, PyObject *args)
 {
-    PyObject *result = NULL;
     PyObject *temp;
 
     if (PyArg_ParseTuple(args, "O", &temp)) {
@@ -750,7 +744,7 @@ pysoundio__set_write_callback(PyObject *self, PyObject *args)
         rc.write_callback = temp;
         Py_RETURN_NONE;
     }
-    return result;
+    return NULL;
 }
 
 static void
@@ -768,31 +762,33 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
     int fill_bytes = soundio_ring_buffer_fill_count(rc->output_buffer);
     int fill_count = fill_bytes / outstream->bytes_per_frame;
 
-    if (frame_count_min > fill_count) {
-        // Ring buffer does not have enough data, fill with zeroes.
-        for (;;) {
-            if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count)))
-                PyErr_SetString(PySoundIoError, soundio_strerror(err));
-            if (frame_count <= 0)
-                break;
-            for (int frame = 0; frame < frame_count; frame += 1) {
-                for (int ch = 0; ch < outstream->layout.channel_count; ch += 1) {
-                    memset(areas[ch].ptr, 0, outstream->bytes_per_sample);
-                    areas[ch].ptr += areas[ch].step;
-                }
-            }
-            if ((err = soundio_outstream_end_write(outstream)))
-                PyErr_SetString(PySoundIoError, soundio_strerror(err));
-        }
-    }
+    // if (frame_count_min > fill_count) {
+    //     // Ring buffer does not have enough data, fill with zeroes.
+    //     for (;;) {
+    //         if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count)))
+    //             PyErr_SetString(PySoundIoError, soundio_strerror(err));
+    //         if (frame_count <= 0)
+    //             return;
+    //         for (int frame = 0; frame < frame_count; frame += 1) {
+    //             for (int ch = 0; ch < outstream->layout.channel_count; ch += 1) {
+    //                 memset(areas[ch].ptr, 0, outstream->bytes_per_sample);
+    //                 areas[ch].ptr += areas[ch].step;
+    //             }
+    //         }
+    //         if ((err = soundio_outstream_end_write(outstream)))
+    //             PyErr_SetString(PySoundIoError, soundio_strerror(err));
+    //     }
+    // }
 
     int read_count = min_int(frame_count_max, fill_count);
     int frames_left = read_count;
 
     while (frames_left > 0) {
         int frame_count = frames_left;
-        if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count)))
+        if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count))) {
             PyErr_SetString(PySoundIoError, soundio_strerror(err));
+            return;
+        }
         if (frame_count <= 0)
             break;
         for (int frame = 0; frame < frame_count; frame += 1) {
@@ -802,20 +798,20 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
                 read_ptr += outstream->bytes_per_sample;
             }
         }
-        if ((err = soundio_outstream_end_write(outstream)))
+        if ((err = soundio_outstream_end_write(outstream))) {
             PyErr_SetString(PySoundIoError, soundio_strerror(err));
+            return;
+        }
         frames_left -= frame_count;
     }
     soundio_ring_buffer_advance_read_ptr(rc->output_buffer, read_count * outstream->bytes_per_frame);
 
-    // PyGILState_STATE state = PyGILState_Ensure();
-
-    // if (rc->write_callback) {
-    //     PyObject *result = PyObject_CallObject(rc->write_callback, NULL);
-    //     Py_XDECREF(result);
-    // }
-
-    // PyGILState_Release(state);
+    if (rc->write_callback) {
+        PyGILState_STATE state = PyGILState_Ensure();
+        PyObject *result = PyObject_CallObject(rc->write_callback, NULL);
+        Py_XDECREF(result);
+        PyGILState_Release(state);
+    }
 }
 
 
