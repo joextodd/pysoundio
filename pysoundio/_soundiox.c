@@ -26,8 +26,6 @@
 #include <soundio/soundio.h>
 #include "_soundiox.h"
 
-#include <math.h>
-
 
 /************************************************************
  * Python Methods
@@ -56,9 +54,24 @@ static PyMethodDef soundio_methods[] = {
         "connect to a specific backend"
     },
     {
+        "backend_count",
+        pysoundio__backend_count, METH_VARARGS,
+        "get backend count"
+    },
+    {
         "flush",
         pysoundio__flush, METH_VARARGS,
         "atomically update information for all connected devices"
+    },
+    {
+        "wait_events",
+        pysoundio__wait_events, METH_VARARGS,
+        "calls flush and waits for another event"
+    },
+    {
+        "soundio_wakeup",
+        pysoundio__wakeup, METH_VARARGS,
+        "makes wait events stop blocking"
     },
     {
         "strerror",
@@ -131,6 +144,56 @@ static PyMethodDef soundio_methods[] = {
         "get the default builtin channel layout"
     },
     {
+        "best_matching_channel_layout",
+        pysoundio__best_matching_channel_layout, METH_VARARGS,
+        "get the best matching channel layout for two devices"
+    },
+    {
+        "channel_layout_builtin_count",
+        pysoundio__channel_layout_builtin_count, METH_VARARGS,
+        "get the number of builtin channel layouts"
+    },
+    {
+        "channel_layout_detect_builtin",
+        pysoundio__channel_layout_detect_builtin, METH_VARARGS,
+        "populates the name field of layout if it matches a builtin one"
+    },
+    {
+        "channel_layout_equal",
+        pysoundio__channel_layout_equal, METH_VARARGS,
+        "the channel count field and each channel id matches in the supplied channel layouts"
+    },
+    {
+        "channel_layout_find_channel",
+        pysoundio__channel_layout_find_channel, METH_VARARGS,
+        "get the index of channel in layout, or -1 if not found"
+    },
+    {
+        "channel_layout_get_builtin",
+        pysoundio__channel_layout_get_builtin, METH_VARARGS,
+        "get a builtin channel layout"
+    },
+    {
+        "force_device_scan",
+        pysoundio__force_device_scan, METH_VARARGS,
+        "force a device rescan"
+    },
+    {
+        "get_bytes_per_frame",
+        pysoundio__get_bytes_per_frame, METH_VARARGS,
+        "get bytes per frame"
+    },
+    {
+        "get_bytes_per_sample",
+        pysoundio__get_bytes_per_sample, METH_VARARGS,
+        "get bytes per sample"
+    },
+    {
+        "get_bytes_per_second",
+        pysoundio__get_bytes_per_second, METH_VARARGS,
+        "get bytes per second"
+    },
+    {
         "set_read_callback",
         pysoundio__set_read_callback, METH_VARARGS,
         "set read callback"
@@ -154,6 +217,11 @@ static PyMethodDef soundio_methods[] = {
         "instream_start",
         pysoundio__instream_start, METH_VARARGS,
         "start input stream"
+    },
+    {
+        "instream_get_latency",
+        pysoundio__instream_get_latency, METH_VARARGS,
+        "get next input frame length in seconds"
     },
     {
         "set_write_callback",
@@ -184,6 +252,11 @@ static PyMethodDef soundio_methods[] = {
         "outstream_clear_buffer",
         pysoundio__outstream_clear_buffer, METH_VARARGS,
         "clear output buffer"
+    },
+    {
+        "outstream_get_latency",
+        pysoundio__outstream_get_latency, METH_VARARGS,
+        "get next output frame length in seconds"
     },
     {
         "input_ring_buffer_create",
@@ -234,6 +307,11 @@ static PyMethodDef soundio_methods[] = {
         "ring_buffer_clear",
         pysoundio__ring_buffer_clear, METH_VARARGS,
         "clear ring buffer"
+    },
+    {
+        "ring_buffer_capacity",
+        pysoundio__ring_buffer_capacity, METH_VARARGS,
+        "get actual capacity of buffer"
     },
 
     {NULL, NULL, 0, NULL}
@@ -328,9 +406,9 @@ static PyObject *
 pysoundio__connect_backend(PyObject *self, PyObject *args)
 {
     PyObject *data;
-    uint8_t backend;
+    int backend;
 
-    if (!PyArg_ParseTuple(args, "Ob", &data, &backend))
+    if (!PyArg_ParseTuple(args, "Oi", &data, &backend))
         return NULL;
 
     // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
@@ -342,6 +420,22 @@ pysoundio__connect_backend(PyObject *self, PyObject *args)
     }
     // Py_DECREF(soundio);
     return Py_BuildValue("i", err);
+}
+
+static PyObject *
+pysoundio__backend_count(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+
+    if (!PyArg_ParseTuple(args, "O", &data))
+        return NULL;
+
+    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
+
+    int backends = soundio_backend_count(rc.soundio);
+
+    // Py_DECREF(soundio);
+    return Py_BuildValue("i", backends);
 }
 
 static PyObject *
@@ -358,6 +452,37 @@ pysoundio__flush(PyObject *self, PyObject *args)
     // Py_DECREF(soundio);
     Py_RETURN_NONE;
 }
+
+static PyObject *
+pysoundio__wait_events(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+
+    if (!PyArg_ParseTuple(args, "O", &data))
+        return NULL;
+
+    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
+
+    soundio_wait_events(rc.soundio);
+    // Py_DECREF(soundio);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+pysoundio__soundio_wakeup(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+
+    if (!PyArg_ParseTuple(args, "O", &data))
+        return NULL;
+
+    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
+
+    soundio_wakeup(rc.soundio);
+    // Py_DECREF(soundio);
+    Py_RETURN_NONE;
+}
+
 
 /*************************************************************
  * Debugging
@@ -575,6 +700,154 @@ pysoundio__channel_layout_get_default(PyObject *self, PyObject *args)
     return PyLong_FromVoidPtr((void *)layout);
 }
 
+static PyObject *
+pysoundio__best_matching_channel_layout(PyObject *self, PyObject *args)
+{
+    PyObject *ppreferred;
+    int preferred_count;
+    PyObject *pavailable;
+    int available_count;
+
+    if (!PyArg_ParseTuple(args, "OiOi", &ppreferred, &preferred_count,
+        &pavailable, &available_count))
+        return NULL;
+
+    struct SoundIoChannelLayout *preferred = PyLong_AsVoidPtr(ppreferred);
+    struct SoundIoChannelLayout *available = PyLong_AsVoidPtr(pavailable);
+
+    const struct SoundIoChannelLayout *layout = soundio_best_matching_channel_layout(
+        preferred, preferred_count, available, available_count);
+
+    Py_XDECREF(preferred);
+    Py_XDECREF(available);
+    return PyLong_FromVoidPtr((void *)layout);
+}
+
+static PyObject *
+pysoundio__channel_layout_builtin_count(PyObject *self, PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, NULL))
+        return NULL;
+
+    int count = soundio_channel_layout_builtin_count();
+    return Py_BuildValue("i", count);
+}
+
+static PyObject *
+pysoundio__channel_layout_detect_builtin(PyObject *self, PyObject *args)
+{
+    PyObject *playout;
+
+    if (!PyArg_ParseTuple(args, "O", &playout))
+        return NULL;
+
+    struct SoundIoChannelLayout *layout = PyLong_AsVoidPtr(playout);
+
+    bool count = soundio_channel_layout_detect_builtin(layout);
+    Py_XDECREF(layout);
+    return Py_BuildValue("i", count);
+}
+
+static PyObject *
+pysoundio__channel_layout_equal(PyObject *self, PyObject *args)
+{
+    PyObject *playouta;
+    PyObject *playoutb;
+
+    if (!PyArg_ParseTuple(args, "OO", &playouta, &playoutb))
+        return NULL;
+
+    struct SoundIoChannelLayout *layouta = PyLong_AsVoidPtr(playouta);
+    struct SoundIoChannelLayout *layoutb = PyLong_AsVoidPtr(playoutb);
+
+    bool count = soundio_channel_layout_equal(layouta, layoutb);
+    Py_XDECREF(layouta);
+    Py_XDECREF(layoutb);
+    return Py_BuildValue("i", count);
+}
+
+static PyObject *
+pysoundio__channel_layout_find_channel(PyObject *self, PyObject *args)
+{
+    PyObject *playout;
+    int channel;
+
+    if (!PyArg_ParseTuple(args, "Oi", &playout, &channel))
+        return NULL;
+
+    struct SoundIoChannelLayout *layout = PyLong_AsVoidPtr(playout);
+
+    int index = soundio_channel_layout_find_channel(layout, channel);
+    Py_XDECREF(layout);
+    return Py_BuildValue("i", index);
+}
+
+static PyObject *
+pysoundio__channel_layout_get_builtin(PyObject *self, PyObject *args)
+{
+    int index;
+
+    if (!PyArg_ParseTuple(args, "i", &index))
+        return NULL;
+
+    const struct SoundIoChannelLayout *layout = soundio_channel_layout_get_builtin(index);
+
+    Py_XDECREF(layout);
+    return PyLong_FromVoidPtr((void *)layout);
+}
+
+static PyObject *
+pysoundio__force_device_scan(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+
+    if (!PyArg_ParseTuple(args, "O", &data))
+        return NULL;
+
+    struct SoundIo *soundio = PyLong_AsVoidPtr(data);
+    soundio_force_device_scan(soundio);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+pysoundio__get_bytes_per_frame(PyObject *self, PyObject *args)
+{
+    int format;
+    int channel_count;
+
+    if (!PyArg_ParseTuple(args, "ii", &format, &channel_count))
+        return NULL;
+
+    int bytes = soundio_get_bytes_per_frame(format, channel_count);
+    return Py_BuildValue("i", bytes);
+}
+
+static PyObject *
+pysoundio__get_bytes_per_sample(PyObject *self, PyObject *args)
+{
+    int format;
+
+    if (!PyArg_ParseTuple(args, "i", &format))
+        return NULL;
+
+    int bytes = soundio_get_bytes_per_sample(format);
+    return Py_BuildValue("i", bytes);
+}
+
+static PyObject *
+pysoundio__get_bytes_per_second(PyObject *self, PyObject *args)
+{
+    int format;
+    int channel_count;
+    int sample_rate;
+
+    if (!PyArg_ParseTuple(args, "iii", &format, &channel_count, &sample_rate))
+        return NULL;
+
+    int bytes = soundio_get_bytes_per_second(format, channel_count, sample_rate);
+    return Py_BuildValue("i", bytes);
+}
 
 /*************************************************************
  * Input Stream API
@@ -744,6 +1017,21 @@ pysoundio__instream_start(PyObject *self, PyObject *args)
     return Py_BuildValue("i", err);
 }
 
+static PyObject *
+pysoundio__instream_get_latency(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+    double out_latency;
+
+    if (!PyArg_ParseTuple(args, "Od", &data, &out_latency))
+        return NULL;
+
+    // struct SoundIoInStream *instream = PyLong_AsVoidPtr(data);
+
+    int seconds = soundio_instream_get_latency(rc.input_stream, &out_latency);
+    return Py_BuildValue("i", seconds);
+}
+
 
 /*************************************************************
  * Output Stream API
@@ -772,7 +1060,7 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
 {
     struct RecordContext *rc = outstream->userdata;
     struct SoundIoChannelArea *areas;
-    int frame_count;
+    // int frame_count;
     int err;
 
     if (!rc->output_buffer)
@@ -935,6 +1223,21 @@ pysoundio__outstream_clear_buffer(PyObject *self, PyObject *args)
     }
 
     return Py_BuildValue("i", err);
+}
+
+static PyObject *
+pysoundio__outstream_get_latency(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+    double out_latency;
+
+    if (!PyArg_ParseTuple(args, "Od", &data, &out_latency))
+        return NULL;
+
+    // struct SoundIoOutStream *outstream = PyLong_AsVoidPtr(data);
+
+    int seconds = soundio_outstream_get_latency(rc.output_stream, &out_latency);
+    return Py_BuildValue("i", seconds);
 }
 
 
@@ -1109,6 +1412,23 @@ pysoundio__ring_buffer_clear(PyObject *self, PyObject *args)
     Py_DECREF(buffer);
     Py_RETURN_NONE;
 }
+
+static PyObject *
+pysoundio__ring_buffer_capacity(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+
+    if (!PyArg_ParseTuple(args, "O", &data))
+        return NULL;
+
+    struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
+    int capacity = soundio_ring_buffer_capacity(buffer);
+
+    Py_DECREF(buffer);
+    return Py_BuildValue("i", capacity);
+}
+
+
 
 
 

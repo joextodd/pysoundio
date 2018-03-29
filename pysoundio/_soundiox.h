@@ -37,7 +37,13 @@ pysoundio__connect(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__connect_backend(PyObject *self, PyObject *args);
 static PyObject *
+pysoundio__backend_count(PyObject *self, PyObject *args);
+static PyObject *
 pysoundio__flush(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__wait_events(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__wakeup(PyObject *self, PyObject *args);
 
 /**
  * Debugging
@@ -74,6 +80,26 @@ static PyObject *
 pysoundio__device_sort_channel_layouts(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__channel_layout_get_default(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__best_matching_channel_layout(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__channel_layout_builtin_count(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__channel_layout_detect_builtin(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__channel_layout_equal(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__channel_layout_find_channel(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__channel_layout_get_builtin(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__force_device_scan(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__get_bytes_per_frame(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__get_bytes_per_sample(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__get_bytes_per_second(PyObject *self, PyObject *args);
 
 /**
  * Input Stream API
@@ -88,6 +114,8 @@ static PyObject *
 pysoundio__instream_open(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__instream_start(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__instream_get_latency(PyObject *self, PyObject *args);
 
 /**
  * Output Stream API
@@ -104,6 +132,8 @@ static PyObject *
 pysoundio__outstream_start(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__outstream_clear_buffer(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__outstream_get_latency(PyObject *self, PyObject *args);
 
 /**
  * Ring Buffer API
@@ -128,6 +158,8 @@ static PyObject *
 pysoundio__ring_buffer_advance_write_ptr(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__ring_buffer_clear(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__ring_buffer_capacity(PyObject *self, PyObject *args);
 
 
 #endif

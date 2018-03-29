@@ -29,6 +29,9 @@ class TestInitialisation(unittest.TestCase):
             'float 32-bit LE'
         )
 
+    def test_backend_count(self):
+        self.assertIsInstance(pysoundio.backend_count(self.s), int)
+
 
 class TestDeviceAPI(unittest.TestCase):
 
@@ -84,6 +87,36 @@ class TestDeviceAPI(unittest.TestCase):
     def test_channel_layout_get_default(self):
         self.assertIsNotNone(pysoundio.channel_layout_get_default(2))
 
+    def test_channel_layout_detect_builtin(self):
+        layout = pysoundio.channel_layout_detect_builtin(2)
+        self.assertTrue(pysoundio.channel_layout_detect_builtin(layout))
+
+    def test_channel_layout_equal(self):
+        layout = pysoundio.channel_layout_get_default(2)
+        self.assertTrue(pysoundio.channel_layout_equal(layout, layout))
+
+    def test_channel_layout_find_channel(self):
+        layout = pysoundio.channel_layout_get_default(2)
+        self.assertIsInstance(pysoundio.channel_layout_find_channel(layout, 0), int)
+
+    def test_channel_layout_get_builtin(self):
+        self.assertIsNotNone(pysoundio.channel_layout_get_builtin(0))
+
+    def test_force_device_scan(self):
+        pysoundio.force_device_scan(self.s)
+
+    def test_bytes_per_frame(self):
+        self.assertEqual(pysoundio.get_bytes_per_frame(
+            pysoundio.SoundIoFormatFloat32LE, 2), 8)
+
+    def test_bytes_per_sample(self):
+        self.assertEqual(pysoundio.get_bytes_per_sample(
+            pysoundio.SoundIoFormatFloat32LE), 4)
+
+    def test_bytes_per_second(self):
+        self.assertEqual(pysoundio.get_bytes_per_second(
+            pysoundio.SoundIoFormatFloat32LE, 1, 44100), 176400)
+
 
 class TestInputStreamAPI(unittest.TestCase):
 
@@ -124,6 +157,11 @@ class TestInputStreamAPI(unittest.TestCase):
         self.setup_stream()
         pysoundio.instream_open(self.instream)
         self.assertEqual(pysoundio.instream_start(self.instream), 0)
+
+    def test_instream_get_latency(self):
+        self.setup_stream()
+        pysoundio.instream_open(self.instream)
+        self.assertIsInstance(pysoundio.instream_get_latency(self.instream, 0.42), int)
 
 
 class TestOutputStreamAPI(unittest.TestCase):
@@ -167,6 +205,11 @@ class TestOutputStreamAPI(unittest.TestCase):
         pysoundio.outstream_open(self.outstream)
         self.assertEqual(pysoundio.outstream_start(self.outstream), 0)
 
+    def test_outstream_get_latency(self):
+        self.setup_stream()
+        pysoundio.outstream_open(self.outstream)
+        self.assertIsInstance(pysoundio.outstream_get_latency(self.outstream, 0.42), int)
+
 
 class TestRingBufferAPI(unittest.TestCase):
 
@@ -208,6 +251,9 @@ class TestRingBufferAPI(unittest.TestCase):
 
     def test_outstream_clear_buffer(self):
         pysoundio.ring_buffer_clear(self.buffer)
+
+    def test_ring_buffer_capacity(self):
+        self.assertIsInstance(pysoundio.ring_buffer_capacity(self.buffer), int)
 
 
 if __name__ == '__main__':

@@ -24,6 +24,9 @@ class TestPySoundIo(unittest.TestCase):
     def test_version(self):
         self.assertIsInstance(self.sio.version, str)
 
+    def test_backend_count(self):
+        self.assertIsInstance(self.sio.backend_count, int)
+
     def test_get_default_input_device(self):
         self.assertIsNotNone(self.sio.get_default_input_device())
 
@@ -71,6 +74,20 @@ class TestPySoundIo(unittest.TestCase):
 
     def test_get_default_layout(self):
         self.assertIsNotNone(self.sio._get_default_layout(2))
+
+
+    def test_bytes_per_frame(self):
+        self.assertEqual(pysoundio.get_bytes_per_frame(
+            pysoundio.SoundIoFormatFloat32LE, 2), 8)
+
+    def test_bytes_per_sample(self):
+        self.assertEqual(pysoundio.get_bytes_per_sample(
+            pysoundio.SoundIoFormatFloat32LE), 4)
+
+    def test_bytes_per_second(self):
+        self.assertEqual(pysoundio.get_bytes_per_second(
+            pysoundio.SoundIoFormatFloat32LE, 1, 44100), 176400)
+
 
     def test_create_input_ring_buffer(self):
         capacity = 44100 * 8

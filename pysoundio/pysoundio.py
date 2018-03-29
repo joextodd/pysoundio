@@ -8,8 +8,8 @@ It is suitable for real-time and consumer software.
 -> https://libsound.io
 
 TODO:
-    - Add all function, structure definitions
     - More device statistics
+    - Move streams to own class
     - Fix memory leaks
     - Publish
     - Docs
@@ -134,6 +134,10 @@ class PySoundIo(object):
         Atomically update information for all connected devices.
         """
         soundio.flush(self._soundio)
+
+    @property
+    def backend_count(self):
+        return soundio.backend_count(self._soundio)
 
     def _call(self, fn, *args, **kwargs):
         """
@@ -333,6 +337,15 @@ class PySoundIo(object):
         """
         return soundio.channel_layout_get_default(channels)
 
+    def get_bytes_per_frame(self, device, channels):
+        return soundio.get_bytes_per_frame(device, channels)
+
+    def get_bytes_per_sample(self, device):
+        return soundio.get_bytes_per_sample(device)
+
+    def get_bytes_per_frame(self, device, channels, sample_rate):
+        return soundio.get_bytes_per_second(device, channels, sample_rate)
+
     def _create_input_ring_buffer(self, capacity):
         """
         Creates ring buffer with the capacity to hold 10 seconds of data,
@@ -412,6 +425,9 @@ class PySoundIo(object):
             PySoundIoError if there is an error starting stream.
         """
         self._call(soundio.instream_start, self.input_stream)
+
+    def get_input_latency(self, out_latency):
+        return soundio.instream_get_latency(self.input_stream, out_latency)
 
     def _read_callback(self):
         """
@@ -546,6 +562,9 @@ class PySoundIo(object):
     def _clear_output_buffer(self):
         if self.output_buffer:
             soundio.ring_buffer_clear(self.output_buffer)
+
+    def get_output_latency(self, out_latency):
+        return soundio.instream_get_latency(self.output_stream, out_latency)
 
     def start_output_stream(self, device_id=None,
                             sample_rate=None, dtype=None,
