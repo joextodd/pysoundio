@@ -1,4 +1,7 @@
 __pycache__
+*.pyc
 build
 dist
 pysoundio.egg-info/
+_soundiox*.so
+*.wav

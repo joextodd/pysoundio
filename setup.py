@@ -22,8 +22,9 @@ setup(
     license='MIT',
     author='Joe Todd',
     author_email='joextodd@gmail.com',
-    url='libsound.io',
-    packages=['pysoundio', 'tests'],
+    url='https://github.com/joextodd/pysoundio',
+    download_url = 'https://github.com/joextodd/pysoundio/archive/' + version.group(1) + '.tar.gz',
+    packages=['pysoundio', 'examples', 'tests'],
     ext_modules=[soundio],
     test_suite='tests',
     keywords=('audio', 'sound', 'stream')
