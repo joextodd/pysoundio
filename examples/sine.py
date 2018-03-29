@@ -21,7 +21,7 @@ from pysoundio import (
 
 class Player(object):
 
-    def __init__(self, freq, backend=None, output_device=None,
+    def __init__(self, freq=None, backend=None, output_device=None,
                  sample_rate=None, block_size=None, channels=None):
         self.pysoundio = PySoundIo(backend=None)
 
@@ -38,7 +38,7 @@ class Player(object):
             device_id=output_device,
             channels=1,
             sample_rate=self.sample_rate,
-            block_size=4096,
+            block_size=self.block_size,
             dtype=SoundIoFormatFloat32LE,
             write_callback=self.callback
         )
@@ -47,7 +47,7 @@ class Player(object):
         self.pysoundio.close()
 
     def callback(self, data, length):
-        indata = ar.array('f', [0] * 4096)
+        indata = ar.array('f', [0] * length)
         for i in range(0, length):
             indata[i] = math.sin(
                 (self.seconds_offset + i * self.seconds_per_frame) * self.radians_per_second)
@@ -62,10 +62,10 @@ if __name__ == '__main__':
     )
     parser.add_argument('--freq', default=442.0, help='Note frequency (optional)')
     parser.add_argument('--backend', help='Backend to use (optional)')
-    parser.add_argument('--blocksize', help='Block size (optional)')
-    parser.add_argument('--rate', default=44100, help='Sample rate (optional)')
+    parser.add_argument('--blocksize', type=int, help='Block size (optional)')
+    parser.add_argument('--rate', type=int, default=44100, help='Sample rate (optional)')
     parser.add_argument('--channels', type=int, default=2, help='Mono or stereo (optional)')
-    parser.add_argument('--device', help='Output device id (optional)')
+    parser.add_argument('--device', type=int, help='Output device id (optional)')
     args = parser.parse_args()
 
     player = Player(args.freq, args.backend, args.device, args.rate, args.blocksize, args.channels)

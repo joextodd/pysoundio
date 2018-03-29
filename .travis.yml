@@ -6,6 +6,6 @@ python:
   - "3.5"
   - "3.6"
 before_install:
-  - brew update && brew install libsoundio
+  - brew install libsoundio
 script:
   - python setup.py test

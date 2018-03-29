@@ -9,12 +9,12 @@ It is suitable for real-time and consumer software.
 
 TODO:
     - Add all function, structure definitions
-    - Add enums to constants
-    - Autoset formats, sample rates, block size if not specified
+    - More device statistics
     - Fix memory leaks
     - Publish
     - Docs
     - TravisCI
+    - play, record functions
 """
 import logging
 import threading
@@ -64,18 +64,19 @@ class _InputProcessingThread(threading.Thread):
 
 class _OutputProcessingThread(threading.Thread):
 
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, block_size, *args, **kwargs):
         self.buffer = parent.output_buffer
         self.callback = parent.write_callback
-        self.block_size = 4096
+        self.bytes_per_frame = parent.output_bytes_per_frame
+        self.block_size = block_size
         super(_OutputProcessingThread, self).__init__(*args, **kwargs)
 
     def run(self):
         """ Callback to fill data """
-        data = bytearray(b'' * 4096 * 4)
+        data = bytearray(b'' * self.block_size * self.bytes_per_frame)
         free_bytes = soundio.ring_buffer_free_count(self.buffer)
         if self.callback and free_bytes >= len(data):
-            self.callback(data=data, length=4096)
+            self.callback(data=data, length=self.block_size)
         soundio.ring_buffer_write_ptr(self.buffer, data, len(data))
         soundio.ring_buffer_advance_write_ptr(self.buffer, len(data))
 
@@ -402,7 +403,6 @@ class PySoundIo(object):
         """
         self._call(soundio.instream_open, self.input_stream)
         pystream = _ctypes.cast(self.input_stream, _ctypes.POINTER(SoundIoInStream))
-        self.block_size = int(pystream.contents.software_latency / self.sample_rate)
 
     def _start_input_stream(self):
         """
@@ -529,11 +529,11 @@ class PySoundIo(object):
         """
         self._call(soundio.outstream_start, self.output_stream)
 
-    def _write_callback(self):
+    def _write_callback(self, size):
         """
         Internal write callback.
         """
-        _OutputProcessingThread(parent=self).start()
+        _OutputProcessingThread(parent=self, block_size=size).start()
 
     def _underflow_callback(self, stream):
         """
@@ -589,7 +589,9 @@ class PySoundIo(object):
         self.output_bytes_per_frame = pystream.contents.bytes_per_frame
         capacity = (DEFAULT_RING_BUFFER_DURATION *
                     pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
-
+        # if self.block_size is None:
+            # self.block_size = pystream.contents.software_latency * self.sample_rate
+        # print(self.block_size)
         self._create_output_ring_buffer(capacity)
         self._clear_output_buffer()
         self._start_output_stream()

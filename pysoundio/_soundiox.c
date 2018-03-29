@@ -772,6 +772,7 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
 {
     struct RecordContext *rc = outstream->userdata;
     struct SoundIoChannelArea *areas;
+    int frame_count;
     int err;
 
     if (!rc->output_buffer)
@@ -785,7 +786,7 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
     //     // Ring buffer does not have enough data, fill with zeroes.
     //     for (;;) {
     //         if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count)))
-    //             PyErr_SetString(PySoundIoError, soundio_strerror(err));
+    //             panic("begin write error: %s", soundio_strerror(err));
     //         if (frame_count <= 0)
     //             return;
     //         for (int frame = 0; frame < frame_count; frame += 1) {
@@ -795,7 +796,7 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
     //             }
     //         }
     //         if ((err = soundio_outstream_end_write(outstream)))
-    //             PyErr_SetString(PySoundIoError, soundio_strerror(err));
+    //             panic("end write error: %s", soundio_strerror(err));
     //     }
     // }
 
@@ -827,7 +828,10 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
 
     if (rc->write_callback) {
         PyGILState_STATE state = PyGILState_Ensure();
-        PyObject *result = PyObject_CallObject(rc->write_callback, NULL);
+        PyObject *arglist;
+        arglist = Py_BuildValue("(i)", frame_count_max);
+        PyObject *result = PyObject_CallObject(rc->write_callback, arglist);
+        Py_DECREF(arglist);
         Py_XDECREF(result);
         PyGILState_Release(state);
     }
@@ -973,7 +977,6 @@ pysoundio__output_ring_buffer_create(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // memset(rc.output_buffer, 0, 16384);
     return PyLong_FromVoidPtr(rc.output_buffer);
 }
 
