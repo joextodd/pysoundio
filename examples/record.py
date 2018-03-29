@@ -33,7 +33,7 @@ class Record(object):
             channels=channels,
             sample_rate=sample_rate,
             block_size=block_size,
-            fmt=SoundIoFormatFloat32LE,
+            dtype=SoundIoFormatFloat32LE,
             read_callback=self.callback
         )
 

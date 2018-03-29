@@ -79,7 +79,7 @@ class TestPySoundIo(unittest.TestCase):
     def test_start_input_stream(self):
         self.sio.start_input_stream(
             sample_rate=44100,
-            fmt=pysoundio.SoundIoFormatFloat32LE,
+            dtype=pysoundio.SoundIoFormatFloat32LE,
             channels=2)
         self.assertIsNotNone(self.sio.input_stream)
 

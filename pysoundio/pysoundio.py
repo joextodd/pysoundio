@@ -65,17 +65,17 @@ class _OutputProcessingThread(threading.Thread):
     def __init__(self, parent, *args, **kwargs):
         self.buffer = parent.output_buffer
         self.callback = parent.write_callback
-        self.block_size = parent.block_size
+        self.block_size = 4096
         super(_OutputProcessingThread, self).__init__(*args, **kwargs)
 
     def run(self):
         """ Callback to fill data """
-        data = bytearray(b'\x00' * self.block_size)
+        data = bytearray(b'\x01' * 4096 * 4)
         free_bytes = soundio.ring_buffer_free_count(self.buffer)
-        if self.callback:
-            self.callback(data=data, length=self.block_size)
-        soundio.ring_buffer_write_ptr(self.buffer, bytes(data), len(data))
-        soundio.ring_buffer_advance_write_ptr(self.buffer, len(data))
+        if self.callback and free_bytes >= len(data):
+            self.callback(data=data, length=4096)
+        # soundio.ring_buffer_write_ptr(self.buffer, str(data), len(data))
+        # soundio.ring_buffer_advance_write_ptr(self.buffer, len(data))
 
 
 class PySoundIo(object):
@@ -416,7 +416,7 @@ class PySoundIo(object):
             self.error_callback(stream, err)
 
     def start_input_stream(self, device_id=None,
-                           sample_rate=None, fmt=None,
+                           sample_rate=None, dtype=None,
                            block_size=None, channels=None,
                            read_callback=None):
         """
@@ -424,7 +424,7 @@ class PySoundIo(object):
         a ring buffer and starts the stream.
         """
         self.sample_rate = sample_rate
-        self.format = fmt
+        self.format = dtype
         self.block_size = block_size
         self.channels = channels
         self.read_callback = read_callback
@@ -443,7 +443,7 @@ class PySoundIo(object):
 
         if not self.supports_format(self.input_device, self.format):
             raise PySoundIoError('Invalid format: %s interleaved' %
-                                 (soundio.format_string(self.format).decode()))
+                                 (soundio.format_string(self.format)))
 
         self._create_input_stream()
         self._open_input_stream()
@@ -518,7 +518,7 @@ class PySoundIo(object):
             self.underflow_callback(stream)
 
     def start_output_stream(self, device_id=None,
-                            sample_rate=None, fmt=None,
+                            sample_rate=None, dtype=None,
                             block_size=None, channels=None,
                             write_callback=None):
         """
@@ -526,7 +526,7 @@ class PySoundIo(object):
         a ring buffer and starts the stream.
         """
         self.sample_rate = sample_rate
-        self.format = fmt
+        self.format = dtype
         self.block_size = block_size
         self.channels = channels
         self.write_callback = write_callback
@@ -545,7 +545,7 @@ class PySoundIo(object):
 
         if not self.supports_format(self.output_device, self.format):
             raise PySoundIoError('Invalid format: %s interleaved' %
-                                 (soundio.format_string(self.format).decode()))
+                                 (soundio.format_string(self.format)))
 
         self._create_output_stream()
         self._open_output_stream()
@@ -553,6 +553,7 @@ class PySoundIo(object):
         self.output_bytes_per_frame = pystream.contents.bytes_per_frame
         capacity = (DEFAULT_RING_BUFFER_DURATION *
                     pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
+
         self._create_output_ring_buffer(capacity)
         self._start_output_stream()
         self.flush()
@@ -627,7 +628,7 @@ class InputStream(_BaseStream):
 
         if not self._soundio.supports_format(self.device, self.format):
             raise PySoundIoError('Invalid format: %s interleaved' %
-            (soundio.format_string(self.format).decode()))
+            (soundio.format_string(self.format)))
 
     def close(self):
         """
@@ -675,7 +676,7 @@ class OutputStream(_BaseStream):
 
         if not self._soundio.supports_format(self.device, self.format):
             raise PySoundIoError('Invalid format: %s interleaved' %
-            (soundio.format_string(self.format).decode()))
+            (soundio.format_string(self.format)))
 
     def close(self):
         """

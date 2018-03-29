@@ -195,7 +195,7 @@ class TestRingBufferAPI(unittest.TestCase):
         self.assertEqual(pysoundio.ring_buffer_free_count(self.buffer), count + 16)
 
     def test_ring_buffer_write_ptr(self):
-        data = bytes(b'\x01\x02\x03\x04')
+        data = '\x01\x02\x03\x04'
         pysoundio.ring_buffer_write_ptr(self.buffer, data, len(data))
 
     def test_ring_buffer_free_count(self):
