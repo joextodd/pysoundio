@@ -181,6 +181,11 @@ static PyMethodDef soundio_methods[] = {
         "start output stream"
     },
     {
+        "outstream_clear_buffer",
+        pysoundio__outstream_clear_buffer, METH_VARARGS,
+        "clear output buffer"
+    },
+    {
         "input_ring_buffer_create",
         pysoundio__input_ring_buffer_create, METH_VARARGS,
         "create input ring buffer"
@@ -225,7 +230,11 @@ static PyMethodDef soundio_methods[] = {
         pysoundio__ring_buffer_advance_write_ptr, METH_VARARGS,
         "advance write pointer"
     },
-
+    {
+        "ring_buffer_clear",
+        pysoundio__ring_buffer_clear, METH_VARARGS,
+        "clear ring buffer"
+    },
 
     {NULL, NULL, 0, NULL}
 };
@@ -255,10 +264,8 @@ static int min_int(int a, int b) {
 
 #if PY_MAJOR_VERSION==2
 #define FORMAT_DATA_READ_ID     "s#"
-#define FORMAT_DATA_WRITE_ID    "Osi"
 #else
 #define FORMAT_DATA_READ_ID     "y#"
-#define FORMAT_DATA_WRITE_ID    "Osi"
 #endif
 
 
@@ -278,6 +285,7 @@ pysoundio__create(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    // Py_XINCREF(rc.soundio);
     return PyLong_FromVoidPtr(rc.soundio);
 }
 
@@ -292,7 +300,8 @@ pysoundio__destroy(PyObject *self, PyObject *args)
     // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
 
     soundio_destroy(rc.soundio);
-    rc.soundio = NULL;
+    // Py_XDECREF(rc.soundio);
+    // rc.soundio = NULL;
     Py_RETURN_NONE;
 }
 
@@ -506,7 +515,7 @@ pysoundio__device_unref(PyObject *self, PyObject *args)
     struct SoundIoDevice *device = PyLong_AsVoidPtr(data);
 
     soundio_device_unref(device);
-    Py_XDECREF(device);
+    // Py_XDECREF(device);
     Py_RETURN_NONE;
 }
 
@@ -652,7 +661,7 @@ pysoundio__set_read_callback(PyObject *self, PyObject *args)
             return NULL;
         }
         Py_XINCREF(temp);
-        Py_XDECREF(rc.read_callback);
+        // Py_XDECREF(rc.read_callback);
         rc.read_callback = temp;
         Py_RETURN_NONE;
     }
@@ -758,9 +767,6 @@ pysoundio__set_write_callback(PyObject *self, PyObject *args)
     return NULL;
 }
 
-static const double PI = 3.14159265358979323846264338328;
-static double seconds_offset = 0.0;
-
 static void
 write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max)
 {
@@ -770,23 +776,6 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
 
     if (!rc->output_buffer)
         return;
-
-    // char *ptr = soundio_ring_buffer_write_ptr(rc->output_buffer);
-
-    // double float_sample_rate = outstream->sample_rate;
-    // double seconds_per_frame = 1.0 / float_sample_rate;
-    // const struct SoundIoChannelLayout *layout = &outstream->layout;
-    // double pitch = 440.0;
-    // double radians_per_second = pitch * 2.0 * PI;
-    // for (int frame = 0; frame < 4096; frame += 1) {
-    //     double sample = sinf((seconds_offset + frame * seconds_per_frame) * radians_per_second);
-    //     for (int channel = 0; channel < layout->channel_count; channel += 1) {
-    //         float *buf = (float *)ptr;
-    //         *buf = sample;
-    //         ptr += 4;
-    //         soundio_ring_buffer_advance_write_ptr(rc->output_buffer, 4);
-    //     }
-    // }
 
     char *read_ptr = soundio_ring_buffer_read_ptr(rc->output_buffer);
     int fill_bytes = soundio_ring_buffer_fill_count(rc->output_buffer);
@@ -838,10 +827,7 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
 
     if (rc->write_callback) {
         PyGILState_STATE state = PyGILState_Ensure();
-        // PyObject *arglist;
-        // arglist = Py_BuildValue("(i)", frame_count_max);
         PyObject *result = PyObject_CallObject(rc->write_callback, NULL);
-        // Py_DECREF(arglist);
         Py_XDECREF(result);
         PyGILState_Release(state);
     }
@@ -930,6 +916,23 @@ pysoundio__outstream_start(PyObject *self, PyObject *args)
     return Py_BuildValue("i", err);
 }
 
+static PyObject *
+pysoundio__outstream_clear_buffer(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+
+    if (!PyArg_ParseTuple(args, "O", &data))
+        return NULL;
+
+    int err = soundio_outstream_clear_buffer(rc.output_stream);
+    if (err) {
+        PyErr_SetString(PySoundIoError, soundio_strerror(err));
+        return NULL;
+    }
+
+    return Py_BuildValue("i", err);
+}
+
 
 /*************************************************************
  * Ring Buffer API
@@ -970,6 +973,7 @@ pysoundio__output_ring_buffer_create(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    // memset(rc.output_buffer, 0, 16384);
     return PyLong_FromVoidPtr(rc.output_buffer);
 }
 
@@ -1040,23 +1044,20 @@ static PyObject *
 pysoundio__ring_buffer_write_ptr(PyObject *self, PyObject *args)
 {
     PyObject *pbuf;
+    PyByteArrayObject *pdata;
     char *data;
     int length;
 
-    if (!PyArg_ParseTuple(args, FORMAT_DATA_WRITE_ID, &pbuf, &data, &length))
+    if (!PyArg_ParseTuple(args, "OOi", &pbuf, &pdata, &length))
         return NULL;
 
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(pbuf);
     char *ptr = soundio_ring_buffer_write_ptr(buffer);
-    // memcpy(ptr, data, length);
-
-    // for (int i = 0; i < 4096 * 4; i += 4) {
-    //     float *buf = (float *)ptr;
-    //     *buf = data;
-    //     data += 4;
-    // }
+    data = PyByteArray_AsString((PyObject *)pdata);
+    memcpy(ptr, data, length);
 
     Py_DECREF(buffer);
+    Py_DECREF(data);
     Py_RETURN_NONE;
 }
 
@@ -1086,6 +1087,21 @@ pysoundio__ring_buffer_advance_write_ptr(PyObject *self, PyObject *args)
 
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
     soundio_ring_buffer_advance_write_ptr(buffer, count);
+
+    Py_DECREF(buffer);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+pysoundio__ring_buffer_clear(PyObject *self, PyObject *args)
+{
+    PyObject *data;
+
+    if (!PyArg_ParseTuple(args, "O", &data))
+        return NULL;
+
+    struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
+    soundio_ring_buffer_clear(buffer);
 
     Py_DECREF(buffer);
     Py_RETURN_NONE;

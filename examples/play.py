@@ -33,7 +33,7 @@ class Player(object):
             channels=1,
             sample_rate=rate,
             block_size=4096,
-            fmt=SoundIoFormatFloat32LE,
+            dtype=SoundIoFormatFloat32LE,
             write_callback=self.callback
         )
         self.current_block = 0
@@ -43,9 +43,8 @@ class Player(object):
         self.pysoundio.close()
 
     def callback(self, data, length):
-        # print(data)
         current = self.current_block * 4096
-        struct.pack_into('%sf' % 4096, data, 0, *self.data[current:current + 4096])
+        data[:] = struct.pack('%sf' % 4096, *self.data[current:current + 4096])
         self.current_block += 1
 
 

@@ -8,11 +8,9 @@ It is suitable for real-time and consumer software.
 -> https://libsound.io
 
 TODO:
-    - Sine example
-
     - Add all function, structure definitions
     - Add enums to constants
-    - Autoset formats and sample rates if not specified
+    - Autoset formats, sample rates, block size if not specified
     - Fix memory leaks
     - Publish
     - Docs
@@ -22,8 +20,12 @@ import logging
 import threading
 
 import ctypes as _ctypes
-from .constants import DEFAULT_RING_BUFFER_DURATION
-from ._structures import (
+from .constants import (
+    DEFAULT_RING_BUFFER_DURATION,
+    PRIORITISED_FORMATS,
+    PRIORITISED_SAMPLE_RATES,
+)
+from .structures import (
     SoundIoErrorCallback,
     SoundIoOverflowCallback,
     SoundIoReadCallback,
@@ -32,7 +34,7 @@ from ._structures import (
     SoundIoDevice,
     SoundIoInStream,
     SoundIoOutStream,
-    SoundIoChannelLayout
+    SoundIoChannelLayout,
 )
 import _soundiox as soundio
 
@@ -70,12 +72,12 @@ class _OutputProcessingThread(threading.Thread):
 
     def run(self):
         """ Callback to fill data """
-        data = bytearray(b'\x01' * 4096 * 4)
+        data = bytearray(b'' * 4096 * 4)
         free_bytes = soundio.ring_buffer_free_count(self.buffer)
         if self.callback and free_bytes >= len(data):
             self.callback(data=data, length=4096)
-        # soundio.ring_buffer_write_ptr(self.buffer, str(data), len(data))
-        # soundio.ring_buffer_advance_write_ptr(self.buffer, len(data))
+        soundio.ring_buffer_write_ptr(self.buffer, data, len(data))
+        soundio.ring_buffer_advance_write_ptr(self.buffer, len(data))
 
 
 class PySoundIo(object):
@@ -279,6 +281,15 @@ class PySoundIo(object):
         """
         return soundio.device_supports_sample_rate(device, rate) > 0
 
+    def get_default_sample_rate(self, device):
+        for sample_rate in PRIORITISED_SAMPLE_RATES:
+            if self.supports_sample_rate(device, sample_rate):
+                self.sample_rate = sample_rate
+                break
+        if not self.sample_rate:
+            pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
+            self.sample_rate = device.contents.sample_rates.contents.max
+
     def supports_format(self, device, format):
         """
         Check the format is supported by the selected device.
@@ -291,6 +302,15 @@ class PySoundIo(object):
             bool: True if the format is supported for this device
         """
         return soundio.device_supports_format(device, format) > 0
+
+    def get_default_format(self, device):
+        for dtype in PRIORITISED_FORMATS:
+            if self.supports_format(device, dtype):
+                self.format = dtype
+                break
+        if self.format == soundio.SoundIoFormatInvalid:
+            pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
+            self.format = pydevice.formats.contents
 
     def sort_channel_layouts(self, device):
         """
@@ -438,12 +458,18 @@ class PySoundIo(object):
         LOGGER.info('Input Device: %s' % pydevice.contents.name.decode())
         self.sort_channel_layouts(self.input_device)
 
-        if not self.supports_sample_rate(self.input_device, self.sample_rate):
-            raise PySoundIoError('Invalid sample rate: %d' % self.sample_rate)
+        if self.sample_rate:
+            if not self.supports_sample_rate(self.input_device, self.sample_rate):
+                raise PySoundIoError('Invalid sample rate: %d' % self.sample_rate)
+        else:
+            self.get_default_sample_rate(self.input_device)
 
-        if not self.supports_format(self.input_device, self.format):
-            raise PySoundIoError('Invalid format: %s interleaved' %
-                                 (soundio.format_string(self.format)))
+        if self.format:
+            if not self.supports_format(self.input_device, self.format):
+                raise PySoundIoError('Invalid format: %s interleaved' %
+                                    (soundio.format_string(self.format)))
+        else:
+            self.get_default_format(self.input_device)
 
         self._create_input_stream()
         self._open_input_stream()
@@ -517,6 +543,10 @@ class PySoundIo(object):
         if self.underflow_callback:
             self.underflow_callback(stream)
 
+    def _clear_output_buffer(self):
+        if self.output_buffer:
+            soundio.ring_buffer_clear(self.output_buffer)
+
     def start_output_stream(self, device_id=None,
                             sample_rate=None, dtype=None,
                             block_size=None, channels=None,
@@ -540,12 +570,18 @@ class PySoundIo(object):
         LOGGER.info('Input Device: %s' % pydevice.contents.name.decode())
         self.sort_channel_layouts(self.output_device)
 
-        if not self.supports_sample_rate(self.output_device, self.sample_rate):
-            raise PySoundIoError('Invalid sample rate: %d' % self.sample_rate)
+        if self.sample_rate:
+            if not self.supports_sample_rate(self.output_device, self.sample_rate):
+                raise PySoundIoError('Invalid sample rate: %d' % self.sample_rate)
+        else:
+            self.get_default_sample_rate(self.output_device)
 
-        if not self.supports_format(self.output_device, self.format):
-            raise PySoundIoError('Invalid format: %s interleaved' %
-                                 (soundio.format_string(self.format)))
+        if self.format:
+            if not self.supports_format(self.output_device, self.format):
+                raise PySoundIoError('Invalid format: %s interleaved' %
+                                    (soundio.format_string(self.format)))
+        else:
+            self.get_default_format(self.output_device)
 
         self._create_output_stream()
         self._open_output_stream()
@@ -555,6 +591,7 @@ class PySoundIo(object):
                     pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
 
         self._create_output_ring_buffer(capacity)
+        self._clear_output_buffer()
         self._start_output_stream()
         self.flush()
 

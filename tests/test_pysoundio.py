@@ -55,9 +55,19 @@ class TestPySoundIo(unittest.TestCase):
         device = self.sio.get_input_device(0)
         self.assertTrue(self.sio.supports_sample_rate(device, 44100))
 
+    def test_get_default_sample_rate(self):
+        device = self.sio.get_input_device(0)
+        self.sio.get_default_sample_rate(device)
+        self.assertIsNotNone(self.sio.sample_rate)
+
     def test_supports_format(self):
         device = self.sio.get_input_device(0)
         self.assertTrue(self.sio.supports_format(device, pysoundio.SoundIoFormatFloat32LE))
+
+    def test_get_default_format(self):
+        device = self.sio.get_input_device(0)
+        self.sio.get_default_format(device)
+        self.assertIsNotNone(self.sio.format)
 
     def test_get_default_layout(self):
         self.assertIsNotNone(self.sio._get_default_layout(2))

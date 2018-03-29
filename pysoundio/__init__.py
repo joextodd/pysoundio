@@ -31,7 +31,7 @@ except ImportError:
     sys.exit(-1)
 
 
-from ._structures import (
+from .structures import (
     SoundIo,
     SoundIoChannelArea,
     SoundIoChannelLayout,

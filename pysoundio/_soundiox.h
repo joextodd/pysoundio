@@ -102,6 +102,8 @@ static PyObject *
 pysoundio__outstream_open(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__outstream_start(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__outstream_clear_buffer(PyObject *self, PyObject *args);
 
 /**
  * Ring Buffer API
@@ -124,6 +126,8 @@ static PyObject *
 pysoundio__ring_buffer_free_count(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__ring_buffer_advance_write_ptr(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__ring_buffer_clear(PyObject *self, PyObject *args);
 
 
 #endif
