@@ -32,3 +32,20 @@ or from source
 
     python setup.py install
 
+
+## Tests
+
+    python setup.py test
+
+
+## Examples
+
+See examples directory.
+Some of the examples require pysoundfile, this requires libsndfile.
+
+    pip install pysoundfile
+
+on Linux machines you may need to run
+
+    apt-get install libsndfile
+
