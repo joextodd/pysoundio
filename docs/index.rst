@@ -4,9 +4,11 @@
 
 .. only:: html
 
+.. include:: ../CONTRIBUTING.rst
 
-API Documentation
------------------
+
+API Reference
+-------------
 
 .. automodule:: pysoundio
    :members:
@@ -26,9 +28,7 @@ API Documentation
    :caption: Contents:
 
 
-Indices and tables
-==================
+Index
+=====
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

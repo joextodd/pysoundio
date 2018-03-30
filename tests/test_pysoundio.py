@@ -21,9 +21,6 @@ class TestPySoundIo(unittest.TestCase):
     def tearDown(self):
         self.sio.close()
 
-    def test_version(self):
-        self.assertIsInstance(self.sio.version, str)
-
     def test_backend_count(self):
         self.assertIsInstance(self.sio.backend_count, int)
 

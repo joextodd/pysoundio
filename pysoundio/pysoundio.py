@@ -100,13 +100,6 @@ class PySoundIo(object):
             self._call(soundio.connect, self._soundio)
         self.flush()
 
-    @property
-    def version(self):
-        """
-        Return version string for libsoundio
-        """
-        return soundio.version_string()
-
     def close(self):
         """
         Clean up allocated memory
@@ -141,8 +134,9 @@ class PySoundIo(object):
         """
         Call libsoundio function and check error codes.
 
-        Raises:
-            PySoundIoError with libsoundio error message
+        Raises
+        ------
+            - PySoundIoError with libsoundio error message
         """
         rc = fn(*args, **kwargs)
         if rc != 0:
@@ -152,9 +146,6 @@ class PySoundIo(object):
     def get_default_input_device(self):
         """
         Returns default input device
-
-        Args:
-            device_id (int): Device index
 
         Returns:
             PySoundIoDevice input device
@@ -262,7 +253,9 @@ class PySoundIo(object):
         return (input_devices, output_devices)
 
     def print_devices(self):
-        """ Print device information """
+        """
+        Print device information
+        """
         input_devices, output_devices = self.list_devices()
         for device in input_devices:
             print('%s' % device.contents.id)
@@ -336,12 +329,42 @@ class PySoundIo(object):
         return soundio.channel_layout_get_default(channels)
 
     def get_bytes_per_frame(self, device, channels):
+        """
+        Get the number of bytes per frame
+
+        Args:
+            device (PySoundIoDevice): device
+            channels (int): number of channels
+
+        Returns:
+            int number of bytes per frame
+        """
         return soundio.get_bytes_per_frame(device, channels)
 
     def get_bytes_per_sample(self, device):
+        """
+        Get the number of bytes per sample
+
+        Args:
+            device (PySoundIoDevice): device
+
+        Returns:
+            int number of bytes per sample
+        """
         return soundio.get_bytes_per_sample(device)
 
-    def get_bytes_per_frame(self, device, channels, sample_rate):
+    def get_bytes_per_second(self, device, channels, sample_rate):
+        """
+        Get the number of bytes per second
+
+        Args:
+            device (PySoundIoDevice): device
+            channels (int): number of channels
+            sample_rate (int): sample rate
+
+        Returns:
+            int number of bytes per second
+        """
         return soundio.get_bytes_per_second(device, channels, sample_rate)
 
     def _create_input_ring_buffer(self, capacity):
