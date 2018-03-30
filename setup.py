@@ -12,6 +12,7 @@ version = re.search(regex, vstr, re.M)
 
 soundio = Extension('_soundiox',
                     sources=['pysoundio/_soundiox.c'],
+                    include_dirs=['./pysoundio'],
                     libraries=['soundio'])
 
 setup(
@@ -24,8 +25,14 @@ setup(
     author_email='joextodd@gmail.com',
     url='https://github.com/joextodd/pysoundio',
     download_url = 'https://github.com/joextodd/pysoundio/archive/' + version.group(1) + '.tar.gz',
-    packages=['pysoundio', 'examples', 'tests'],
+    packages=['pysoundio'],
     ext_modules=[soundio],
     test_suite='tests',
-    keywords=('audio', 'sound', 'stream')
+    keywords=('audio', 'sound', 'stream'),
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'Topic :: Software Development :: Build Tools',
+        'License :: OSI Approved :: MIT License'
+    ],
 )
