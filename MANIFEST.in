@@ -1,0 +1,4 @@
+include LICENSE.txt
+include examples/*
+include tests/*
+include pysoundio/_soundio.h

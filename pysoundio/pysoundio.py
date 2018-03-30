@@ -11,9 +11,7 @@ TODO:
     - More device statistics
     - Move streams to own class
     - Fix memory leaks
-    - Publish
     - Docs
-    - TravisCI
     - play, record functions
 """
 import logging

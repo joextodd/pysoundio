@@ -1,11 +1,11 @@
-os: osx
+os: linux
+dist: xenial
 language: python
 python:
   - "2.7"
-  - "3.4"
-  - "3.5"
   - "3.6"
-before_install:
-  - brew install libsoundio
+before_script:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libsoundio-dev
 script:
   - python setup.py test
