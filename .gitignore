@@ -5,3 +5,5 @@ dist
 pysoundio.egg-info/
 _soundiox*.so
 *.wav
+_build
+_static

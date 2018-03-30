@@ -1,4 +1,5 @@
 include LICENSE.txt
+include README.rst
 include examples/*
 include tests/*
 include pysoundio/_soundio.h
