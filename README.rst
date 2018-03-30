@@ -19,28 +19,27 @@ See `libsoundio <http://libsound.io>`_
 Dependencies
 ------------
 
-macOS
+* macOS ::
 
     brew install libsoundio
 
-Ubuntu / Debian
+* Ubuntu / Debian ::
 
     apt-get install libsoundio-dev
 
 Ubuntu distributions link to an older version of libsoundio,
-so to use the latest version you will need to install from source.
-`http://libsound.io/#releases`_
+so to use the latest version you will need to install from `source. <http://libsound.io/#releases>`_.
 
 
 Installation
 ------------
 
 Once you have installed the dependencies, you can use pip to download
-and install the latest release with a single command.
+and install the latest release with a single command. ::
 
     pip install pysoundio
 
-or from source
+or from source ::
 
     python setup.py install
 
@@ -50,11 +49,11 @@ Examples
 
 See examples directory.
 
-Some of the examples require `pysoundfile <https://pysoundfile.readthedocs.io/en/0.9.0/>`_
+Some of the examples require `pysoundfile <https://pysoundfile.readthedocs.io/en/0.9.0/>`_ ::
 
     pip install pysoundfile
 
-on Linux machines you will need to install libsndfile
+on Linux machines you will need to install libsndfile ::
 
     apt-get install libsndfile
 
@@ -62,7 +61,7 @@ on Linux machines you will need to install libsndfile
 Testing
 -------
 
-To run the test suite.
+To run the test suite. ::
 
     python setup.py test
 
