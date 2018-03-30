@@ -7,13 +7,5 @@ python:
 before_script:
   - sudo apt-get update -y
   - sudo apt-get install -y libsoundio-dev
-  # - wget http://libsound.io/release/libsoundio-1.1.0.tar.gz -O /tmp/libsoundio.tar.gz
-  # - tar -xvf /tmp/libsoundio.tar.gz
-  # - mkdir libsoundio-1.1.0/build
-  # - cd libsoundio-1.1.0/build
-  # - cmake ..
-  # - make
-  # - sudo make install
-  # - cd -
 script:
   - python setup.py test

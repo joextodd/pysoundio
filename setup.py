@@ -23,7 +23,7 @@ setup(
     license='MIT',
     author='Joe Todd',
     author_email='joextodd@gmail.com',
-    url='https://github.com/joextodd/pysoundio',
+    url='http://pysoundio.readthedocs.io/en/latest/',
     download_url = 'https://github.com/joextodd/pysoundio/archive/' + version.group(1) + '.tar.gz',
     packages=['pysoundio'],
     ext_modules=[soundio],
