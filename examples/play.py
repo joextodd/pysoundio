@@ -18,7 +18,6 @@ from pysoundio import (
     PySoundIo,
     SoundIoFormatFloat32LE,
     SoundIoOutStream,
-    set_write_callback
 )
 
 
@@ -43,9 +42,9 @@ class Player(object):
         self.pysoundio.close()
 
     def callback(self, data, length):
-        current = self.current_block * 4096
-        data[:] = struct.pack('%sf' % 4096, *self.data[current:current + 4096])
-        self.current_block += 1
+        current = self.current_block
+        data[:] = struct.pack('%sf' % 4096, *self.data[0][current:current + 4096])
+        self.current_block += 4096
 
 
 if __name__ == '__main__':
