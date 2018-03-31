@@ -3,33 +3,18 @@ constants.py
 
 Constants and enumerations.
 """
+
 from _soundiox import (
-    SoundIoBackendNone,
-    SoundIoBackendJack,
-    SoundIoBackendPulseAudio,
-    SoundIoBackendAlsa,
-    SoundIoBackendCoreAudio,
-    SoundIoBackendWasapi,
+    SoundIoBackendNone, SoundIoBackendJack, SoundIoBackendPulseAudio,
+    SoundIoBackendAlsa, SoundIoBackendCoreAudio, SoundIoBackendWasapi,
     SoundIoBackendDummy,
-    SoundIoFormatS8,
-    SoundIoFormatU8,
-    SoundIoFormatS16LE,
-    SoundIoFormatS16BE,
-    SoundIoFormatU16LE,
-    SoundIoFormatU16BE,
-    SoundIoFormatS24LE,
-    SoundIoFormatS24BE,
-    SoundIoFormatU24LE,
-    SoundIoFormatU24BE,
-    SoundIoFormatS32LE,
-    SoundIoFormatS32BE,
-    SoundIoFormatU32LE,
-    SoundIoFormatU32BE,
-    SoundIoFormatFloat32LE,
-    SoundIoFormatFloat32BE,
-    SoundIoFormatFloat64LE,
-    SoundIoFormatFloat64BE,
-    SoundIoFormatInvalid
+    SoundIoFormatS8, SoundIoFormatU8, SoundIoFormatS16LE,
+    SoundIoFormatS16BE, SoundIoFormatU16LE, SoundIoFormatU16BE,
+    SoundIoFormatS24LE, SoundIoFormatS24BE, SoundIoFormatU24LE,
+    SoundIoFormatU24BE, SoundIoFormatS32LE, SoundIoFormatS32BE,
+    SoundIoFormatU32LE, SoundIoFormatU32BE,
+    SoundIoFormatFloat32LE, SoundIoFormatFloat32BE, SoundIoFormatFloat64LE,
+    SoundIoFormatFloat64BE, SoundIoFormatInvalid
 )
 
 DEFAULT_RING_BUFFER_DURATION = 30  # secs
