@@ -8,6 +8,9 @@ It is suitable for real-time and consumer software.
 -> https://libsound.io
 
 TODO:
+    - Fix autodoc
+    - Fix test for v1.0.2
+    - Fix play example
     - Move streams to own class
     - Move all errors to C land
     - Keep globals in C land?
@@ -693,6 +696,9 @@ class PySoundIo(object):
                     pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
         self._create_output_ring_buffer(capacity)
         self._clear_output_buffer()
+        data = bytearray(b'\x00' * self.sample_rate)
+        soundio.ring_buffer_write_ptr(self.output_buffer, data, len(data))
+        soundio.ring_buffer_advance_write_ptr(self.output_buffer, len(data))
         self._start_output_stream()
         self.flush()
 

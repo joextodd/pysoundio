@@ -29,7 +29,7 @@ class Player(object):
         self.block_size = block_size
         self.channels = channels
 
-        self.freq = freq
+        self.freq = float(freq)
         self.seconds_offset = 0.0
         self.radians_per_second = self.freq * 2.0 * math.pi
         self.seconds_per_frame = 1.0 / sample_rate
