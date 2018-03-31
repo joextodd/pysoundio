@@ -28,9 +28,8 @@ __version__ = '0.0.1'
 try:
     from _soundiox import *
 except ImportError:
-    if not os.environ.get('READTHEDOCS'):
-        print('Please install libsoundio, then reinstall pysoundio')
-        sys.exit(-1)
+    print('Please install libsoundio, then reinstall pysoundio')
+    sys.exit(-1)
 
 
 from .structures import (

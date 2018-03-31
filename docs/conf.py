@@ -17,6 +17,17 @@ import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
 
+from unittest.mock import MagicMock
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+
+MOCK_MODULES = ['_soundiox']
+sys.modules.update((module, Mock()) for module in MOCK_MODULES)
 
 # -- Project information -----------------------------------------------------
 
