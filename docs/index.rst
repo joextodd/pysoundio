@@ -10,12 +10,7 @@
 API Reference
 -------------
 
-.. automodule:: pysoundio
-   :members:
-   :undoc-members:
-   :exclude-members: InputStream, OutputStream
-
-.. autoclass:: PySoundIo
+.. autoclass:: pysoundio.PySoundIo
    :members:
    :undoc-members:
    :inherited-members:
