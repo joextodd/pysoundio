@@ -23,11 +23,6 @@ API Reference
 .. only:: html
 
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-
 Index
 =====
 

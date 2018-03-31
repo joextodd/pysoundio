@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import sys
 
 __version__ = '0.0.1'
@@ -27,8 +28,9 @@ __version__ = '0.0.1'
 try:
     from _soundiox import *
 except ImportError:
-    print('Please install libsoundio, then reinstall pysoundio')
-    sys.exit(-1)
+    if not os.environ.get('READTHEDOCS'):
+        print('Please install libsoundio, then reinstall pysoundio')
+        sys.exit(-1)
 
 
 from .structures import (
