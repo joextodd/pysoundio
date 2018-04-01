@@ -86,11 +86,11 @@ class PySoundIo(object):
         self.read_callback = None
         self.write_callback = None
 
-        self._soundio = soundio.create()
+        soundio.create()
         if backend:
-            self._call(soundio.connect_backend, self._soundio, backend)
+            self._call(soundio.connect_backend, backend)
         else:
-            self._call(soundio.connect, self._soundio)
+            self._call(soundio.connect)
         self.flush()
 
     def close(self):
@@ -110,21 +110,20 @@ class PySoundIo(object):
             soundio.device_unref(self.input_device)
         if self.output_device:
             soundio.device_unref(self.output_device)
-        if self._soundio:
-            soundio.destroy(self._soundio)
+        soundio.destroy()
 
     def flush(self):
         """
         Atomically update information for all connected devices.
         """
-        soundio.flush(self._soundio)
+        soundio.flush()
 
     @property
     def backend_count(self):
         """
         Returns the number of available backends.
         """
-        return soundio.backend_count(self._soundio)
+        return soundio.backend_count()
 
     def _call(self, fn, *args, **kwargs):
         """
@@ -148,7 +147,7 @@ class PySoundIo(object):
         ------
         PySoundIoError if the input device is not available
         """
-        device_id = soundio.default_input_device_index(self._soundio)
+        device_id = soundio.default_input_device_index()
         return self.get_input_device(device_id)
 
     def get_input_device(self, device_id):
@@ -167,7 +166,7 @@ class PySoundIo(object):
         ------
         PySoundIoError if the input device is not available
         """
-        self.input_device = soundio.get_input_device(self._soundio, device_id)
+        self.input_device = soundio.get_input_device(device_id)
         if not self.input_device:
             raise PySoundIoError('Input device %d not available' % device_id)
         pydevice = _ctypes.cast(self.input_device, _ctypes.POINTER(SoundIoDevice))
@@ -188,7 +187,7 @@ class PySoundIo(object):
         ------
         PySoundIoError if the output device is not available
         """
-        device_id = soundio.default_output_device_index(self._soundio)
+        device_id = soundio.default_output_device_index()
         return self.get_output_device(device_id)
 
     def get_output_device(self, device_id):
@@ -207,7 +206,7 @@ class PySoundIo(object):
         ------
         PySoundIoError if the output device is not available
         """
-        self.output_device = soundio.get_output_device(self._soundio, device_id)
+        self.output_device = soundio.get_output_device(device_id)
         if not self.output_device:
             raise PySoundIoError('Output device %d not available' % device_id)
         pydevice = _ctypes.cast(self.output_device, _ctypes.POINTER(SoundIoDevice))
@@ -224,17 +223,17 @@ class PySoundIo(object):
         -------
         (list)(dict) containing information on available input / output devices.
         """
-        output_count = soundio.get_output_device_count(self._soundio)
-        input_count = soundio.get_input_device_count(self._soundio)
+        output_count = soundio.get_output_device_count()
+        input_count = soundio.get_input_device_count()
 
-        default_output = soundio.default_output_device_index(self._soundio)
-        default_input = soundio.default_input_device_index(self._soundio)
+        default_output = soundio.default_output_device_index()
+        default_input = soundio.default_input_device_index()
 
         input_devices = []
         output_devices = []
 
         for i in range(0, input_count):
-            device = soundio.get_input_device(self._soundio, i)
+            device = soundio.get_input_device(i)
             pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
             input_devices.append({
                 'id': pydevice.contents.id.decode(), 'name': pydevice.contents.name.decode(),
@@ -244,7 +243,7 @@ class PySoundIo(object):
             soundio.device_unref(device)
 
         for i in range(0, output_count):
-            device = soundio.get_output_device(self._soundio, i)
+            device = soundio.get_output_device(i)
             pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
             output_devices.append({
                 'id': pydevice.contents.id.decode(), 'name': pydevice.contents.name.decode(),
@@ -388,7 +387,7 @@ class PySoundIo(object):
         Creates ring buffer with the capacity to hold 30 seconds of data,
         by default.
         """
-        self.input_buffer = soundio.input_ring_buffer_create(self._soundio, capacity)
+        self.input_buffer = soundio.input_ring_buffer_create(capacity)
         if not self.input_buffer:
             raise PySoundIoError('Failed to create ring buffer')
         return self.input_buffer
@@ -398,7 +397,7 @@ class PySoundIo(object):
         Creates ring buffer with the capacity to hold 30 seconds of data,
         by default.
         """
-        self.output_buffer = soundio.output_ring_buffer_create(self._soundio, capacity)
+        self.output_buffer = soundio.output_ring_buffer_create(capacity)
         if not self.output_buffer:
             raise PySoundIoError('Failed to create ring buffer')
         return self.output_buffer

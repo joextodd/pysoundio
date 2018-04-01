@@ -363,19 +363,14 @@ pysoundio__create(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Py_XINCREF(rc.soundio);
     return PyLong_FromVoidPtr(rc.soundio);
 }
 
 static PyObject *
 pysoundio__destroy(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
-
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
 
     soundio_destroy(rc.soundio);
     Py_RETURN_NONE;
@@ -384,100 +379,70 @@ pysoundio__destroy(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__connect(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
-
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
 
     int err = soundio_connect(rc.soundio);
     if (err) {
         PyErr_SetString(PySoundIoError, soundio_strerror(err));
         return NULL;
     }
-    // Py_DECREF(soundio);
     return Py_BuildValue("i", err);
 }
 
 static PyObject *
 pysoundio__connect_backend(PyObject *self, PyObject *args)
 {
-    PyObject *data;
     int backend;
 
-    if (!PyArg_ParseTuple(args, "Oi", &data, &backend))
+    if (!PyArg_ParseTuple(args, "i", &backend))
         return NULL;
-
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
 
     int err = soundio_connect_backend(rc.soundio, backend);
     if (err) {
         PyErr_SetString(PySoundIoError, soundio_strerror(err));
         return NULL;
     }
-    // Py_DECREF(soundio);
     return Py_BuildValue("i", err);
 }
 
 static PyObject *
 pysoundio__backend_count(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
-
     int backends = soundio_backend_count(rc.soundio);
-
-    // Py_DECREF(soundio);
     return Py_BuildValue("i", backends);
 }
 
 static PyObject *
 pysoundio__flush(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
-
     soundio_flush_events(rc.soundio);
-    // Py_DECREF(soundio);
     Py_RETURN_NONE;
 }
 
 static PyObject *
 pysoundio__wait_events(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
-
     soundio_wait_events(rc.soundio);
-    // Py_DECREF(soundio);
     Py_RETURN_NONE;
 }
 
 static PyObject *
 pysoundio__wakeup(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
-
     soundio_wakeup(rc.soundio);
-    // Py_DECREF(soundio);
     Py_RETURN_NONE;
 }
 
@@ -529,102 +494,74 @@ pysoundio__format_string(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__get_output_device_count(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     int output_count = soundio_output_device_count(rc.soundio);
-
-    // Py_DECREF(soundio);
     return Py_BuildValue("i", output_count);
 }
 
 static PyObject *
 pysoundio__get_input_device_count(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     int input_count = soundio_input_device_count(rc.soundio);
-
-    // Py_DECREF(soundio);
     return Py_BuildValue("i", input_count);
 }
 
 static PyObject *
 pysoundio__default_input_device_index(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     int input_index = soundio_default_input_device_index(rc.soundio);
-
-    // Py_DECREF(soundio);
     return Py_BuildValue("i", input_index);
 }
 
 static PyObject *
 pysoundio__default_output_device_index(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     int output_index = soundio_default_output_device_index(rc.soundio);
-
-    // Py_DECREF(soundio);
     return Py_BuildValue("i", output_index);
 }
 
 static PyObject *
 pysoundio__get_input_device(PyObject *self, PyObject *args)
 {
-    PyObject *data;
     int device_index;
 
-    if (!PyArg_ParseTuple(args, "Oi", &data, &device_index))
+    if (!PyArg_ParseTuple(args, "i", &device_index))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     rc.input_device = soundio_get_input_device(rc.soundio, device_index);
-
     if (rc.input_device->probe_error) {
         PyErr_SetString(PySoundIoError, "Unable to probe device\n");
         return NULL;
     }
 
-    // Py_DECREF(soundio);
     return PyLong_FromVoidPtr(rc.input_device);
 }
 
 static PyObject *
 pysoundio__get_output_device(PyObject *self, PyObject *args)
 {
-    PyObject *data;
     int device_index;
 
-    if (!PyArg_ParseTuple(args, "Oi", &data, &device_index))
+    if (!PyArg_ParseTuple(args, "i", &device_index))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     rc.output_device = soundio_get_output_device(rc.soundio, device_index);
-
     if (rc.output_device->probe_error) {
         PyErr_SetString(PySoundIoError, "Unable to probe device\n");
         return NULL;
     }
 
-    // Py_DECREF(soundio);
     return PyLong_FromVoidPtr(rc.output_device);
 }
 
@@ -639,7 +576,6 @@ pysoundio__device_unref(PyObject *self, PyObject *args)
     struct SoundIoDevice *device = PyLong_AsVoidPtr(data);
 
     soundio_device_unref(device);
-    // Py_XDECREF(device);
     Py_RETURN_NONE;
 }
 
@@ -654,7 +590,6 @@ pysoundio__device_supports_sample_rate(PyObject *self, PyObject *args)
 
     struct SoundIoDevice *device = PyLong_AsVoidPtr(data);
     bool supported = soundio_device_supports_sample_rate(device, sample_rate);
-
     return Py_BuildValue("i", (int)supported);
 }
 
@@ -717,8 +652,6 @@ pysoundio__best_matching_channel_layout(PyObject *self, PyObject *args)
     const struct SoundIoChannelLayout *layout = soundio_best_matching_channel_layout(
         preferred, preferred_count, available, available_count);
 
-    Py_XDECREF(preferred);
-    Py_XDECREF(available);
     return PyLong_FromVoidPtr((void *)layout);
 }
 
@@ -743,7 +676,6 @@ pysoundio__channel_layout_detect_builtin(PyObject *self, PyObject *args)
     struct SoundIoChannelLayout *layout = PyLong_AsVoidPtr(playout);
 
     bool count = soundio_channel_layout_detect_builtin(layout);
-    Py_XDECREF(layout);
     return Py_BuildValue("i", count);
 }
 
@@ -760,8 +692,6 @@ pysoundio__channel_layout_equal(PyObject *self, PyObject *args)
     struct SoundIoChannelLayout *layoutb = PyLong_AsVoidPtr(playoutb);
 
     bool count = soundio_channel_layout_equal(layouta, layoutb);
-    Py_XDECREF(layouta);
-    Py_XDECREF(layoutb);
     return Py_BuildValue("i", count);
 }
 
@@ -777,7 +707,6 @@ pysoundio__channel_layout_find_channel(PyObject *self, PyObject *args)
     struct SoundIoChannelLayout *layout = PyLong_AsVoidPtr(playout);
 
     int index = soundio_channel_layout_find_channel(layout, channel);
-    Py_XDECREF(layout);
     return Py_BuildValue("i", index);
 }
 
@@ -791,21 +720,16 @@ pysoundio__channel_layout_get_builtin(PyObject *self, PyObject *args)
 
     const struct SoundIoChannelLayout *layout = soundio_channel_layout_get_builtin(index);
 
-    Py_XDECREF(layout);
     return PyLong_FromVoidPtr((void *)layout);
 }
 
 static PyObject *
 pysoundio__force_device_scan(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    struct SoundIo *soundio = PyLong_AsVoidPtr(data);
-    soundio_force_device_scan(soundio);
-
+    soundio_force_device_scan(rc.soundio);
     Py_RETURN_NONE;
 }
 
@@ -1228,13 +1152,11 @@ pysoundio__outstream_get_latency(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__input_ring_buffer_create(PyObject *self, PyObject *args)
 {
-    PyObject *data;
     int capacity;
 
-    if (!PyArg_ParseTuple(args, "Oi", &data, &capacity))
+    if (!PyArg_ParseTuple(args, "i", &capacity))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     rc.input_buffer = soundio_ring_buffer_create(rc.soundio, capacity);
     if (!rc.input_buffer) {
         PyErr_SetString(PySoundIoError, "Out of memory");
@@ -1247,13 +1169,11 @@ pysoundio__input_ring_buffer_create(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__output_ring_buffer_create(PyObject *self, PyObject *args)
 {
-    PyObject *data;
     int capacity;
 
-    if (!PyArg_ParseTuple(args, "Oi", &data, &capacity))
+    if (!PyArg_ParseTuple(args, "i", &capacity))
         return NULL;
 
-    // struct SoundIo *soundio = PyLong_AsVoidPtr(data);
     rc.output_buffer = soundio_ring_buffer_create(rc.soundio, capacity);
     if (!rc.output_buffer) {
         PyErr_SetString(PySoundIoError, "Out of memory");
@@ -1407,9 +1327,6 @@ pysoundio__ring_buffer_capacity(PyObject *self, PyObject *args)
     // Py_DECREF(buffer);
     return Py_BuildValue("i", capacity);
 }
-
-
-
 
 
 #if PY_MAJOR_VERSION >= 3
