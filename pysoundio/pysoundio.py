@@ -8,7 +8,6 @@ It is suitable for real-time and consumer software.
 -> https://libsound.io
 
 TODO:
-    - Fix autodoc
     - Fix test for v1.0.2
     - Fix play example
     - Move streams to own class
@@ -16,7 +15,6 @@ TODO:
     - Keep globals in C land?
     - More device statistics
     - Fix memory leaks
-    - play, record functions
 """
 import logging
 import threading

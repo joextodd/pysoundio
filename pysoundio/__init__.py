@@ -26,12 +26,23 @@ __version__ = '0.0.1'
 
 
 try:
-    from _soundiox import *
+    import _soundiox as soundio
 except ImportError:
     print('Please install libsoundio, then reinstall pysoundio')
     sys.exit(-1)
 
-
+from _soundiox import (
+    SoundIoBackendNone, SoundIoBackendJack, SoundIoBackendPulseAudio,
+    SoundIoBackendAlsa, SoundIoBackendCoreAudio, SoundIoBackendWasapi,
+    SoundIoBackendDummy,
+    SoundIoFormatS8, SoundIoFormatU8, SoundIoFormatS16LE,
+    SoundIoFormatS16BE, SoundIoFormatU16LE, SoundIoFormatU16BE,
+    SoundIoFormatS24LE, SoundIoFormatS24BE, SoundIoFormatU24LE,
+    SoundIoFormatU24BE, SoundIoFormatS32LE, SoundIoFormatS32BE,
+    SoundIoFormatU32LE, SoundIoFormatU32BE,
+    SoundIoFormatFloat32LE, SoundIoFormatFloat32BE, SoundIoFormatFloat64LE,
+    SoundIoFormatFloat64BE, SoundIoFormatInvalid
+)
 from .structures import (
     SoundIo,
     SoundIoChannelArea,

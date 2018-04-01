@@ -20,14 +20,15 @@ sys.path.insert(0, os.path.abspath('..'))
 try:
     from unittest.mock import MagicMock
 except:
-    from mock import Mock as MagicMock
+    from mock import MagicMock
 
 
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
-        return MagicMock()
-
+        if name == 'SOUNDIO_MAX_CHANNELS':
+            return 24
+        return name
 
 MOCK_MODULES = ['_soundiox']
 sys.modules.update((module, Mock()) for module in MOCK_MODULES)

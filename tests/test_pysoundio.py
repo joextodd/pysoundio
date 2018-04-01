@@ -74,15 +74,15 @@ class TestPySoundIo(unittest.TestCase):
 
 
     def test_bytes_per_frame(self):
-        self.assertEqual(pysoundio.get_bytes_per_frame(
+        self.assertEqual(self.sio.get_bytes_per_frame(
             pysoundio.SoundIoFormatFloat32LE, 2), 8)
 
     def test_bytes_per_sample(self):
-        self.assertEqual(pysoundio.get_bytes_per_sample(
+        self.assertEqual(self.sio.get_bytes_per_sample(
             pysoundio.SoundIoFormatFloat32LE), 4)
 
     def test_bytes_per_second(self):
-        self.assertEqual(pysoundio.get_bytes_per_second(
+        self.assertEqual(self.sio.get_bytes_per_second(
             pysoundio.SoundIoFormatFloat32LE, 1, 44100), 176400)
 
 
