@@ -5,17 +5,13 @@ PySoundIo
     :target: https://travis-ci.org/joextodd/pysoundio
 .. image:: https://readthedocs.org/projects/pysoundio/badge/?version=latest
     :target: http://pysoundio.readthedocs.io/en/latest/?badge=latest
-.. image:: https://coveralls.io/repos/github/joextodd/pysoundio/badge.svg?branch=master
-:target: https://coveralls.io/github/joextodd/pysoundio?branch=master
 
 
-A simple Pythonic interface for libsoundio.
+A simple Pythonic interface for `libsoundio <http://libsound.io>`_.
 
 libsoundio is a robust, cross-platform solution for real-time audio. It performs
 no buffering or processing on your behalf, instead exposing the raw power of the
 underlying backend.
-
-See `libsoundio <http://libsound.io>`_
 
 
 Dependencies

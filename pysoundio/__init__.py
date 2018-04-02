@@ -52,4 +52,4 @@ from .structures import (
     SoundIoOutStream,
     SoundIoRingBuffer,
 )
-from .pysoundio import PySoundIo, InputStream, OutputStream
+from .pysoundio import PySoundIo, PySoundIoError
