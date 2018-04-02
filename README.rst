@@ -5,6 +5,8 @@ PySoundIo
     :target: https://travis-ci.org/joextodd/pysoundio
 .. image:: https://readthedocs.org/projects/pysoundio/badge/?version=latest
     :target: http://pysoundio.readthedocs.io/en/latest/?badge=latest
+.. image:: https://coveralls.io/repos/github/joextodd/pysoundio/badge.svg?branch=master
+:target: https://coveralls.io/github/joextodd/pysoundio?branch=master
 
 
 A simple Pythonic interface for libsoundio.

@@ -7,3 +7,4 @@ _soundiox*.so
 *.wav
 _build
 _static
+.coveralls.yml
