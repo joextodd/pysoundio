@@ -22,12 +22,8 @@ from pysoundio import (
 class Player(object):
 
     def __init__(self, freq=None, backend=None, output_device=None,
-                 sample_rate=None, block_size=None, channels=None):
+                 sample_rate=None, block_size=None):
         self.pysoundio = PySoundIo(backend=None)
-
-        self.sample_rate = sample_rate
-        self.block_size = block_size
-        self.channels = channels
 
         self.freq = float(freq)
         self.seconds_offset = 0.0
@@ -37,8 +33,8 @@ class Player(object):
         self.pysoundio.start_output_stream(
             device_id=output_device,
             channels=1,
-            sample_rate=self.sample_rate,
-            block_size=self.block_size,
+            sample_rate=sample_rate,
+            block_size=block_size,
             dtype=SoundIoFormatFloat32LE,
             write_callback=self.callback
         )
@@ -64,11 +60,10 @@ if __name__ == '__main__':
     parser.add_argument('--backend', help='Backend to use (optional)')
     parser.add_argument('--blocksize', type=int, help='Block size (optional)')
     parser.add_argument('--rate', type=int, default=44100, help='Sample rate (optional)')
-    parser.add_argument('--channels', type=int, default=2, help='Mono or stereo (optional)')
     parser.add_argument('--device', type=int, help='Output device id (optional)')
     args = parser.parse_args()
 
-    player = Player(args.freq, args.backend, args.device, args.rate, args.blocksize, args.channels)
+    player = Player(args.freq, args.backend, args.device, args.rate, args.blocksize)
     print('Playing...')
     print('CTRL-C to exit')
 
