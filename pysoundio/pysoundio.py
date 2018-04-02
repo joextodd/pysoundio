@@ -6,11 +6,6 @@ Play and Record Sound in Python using libsoundio
 libsoundio is a C library for cross-platform audio input and output.
 It is suitable for real-time and consumer software.
 
-TODO:
-    - Fix play example
-    - Move streams to own class
-    - Keep globals in C land?
-    - More device statistics
 """
 import logging
 import threading

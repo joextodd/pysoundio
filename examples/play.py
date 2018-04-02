@@ -1,8 +1,8 @@
 """
 play.py
 
-Stream the default input device and save to wav file.
-Supports specifying backend, device.
+Stream a wav file to the default output device.
+Supports specifying backend, device and block size.
 
 Requires pysoundfile
     pip install pysoundfile
@@ -23,28 +23,38 @@ from pysoundio import (
 
 class Player(object):
 
-    def __init__(self, infile, backend=None, output_device=None):
+    def __init__(self, infile, backend=None, output_device=None, block_size=None):
 
-        self.data, rate = sf.read(infile)
+        data, rate = sf.read(
+            infile,
+            dtype='float32',
+            always_2d=True
+        )
+        self.data = [d[0] for d in data]
+        self.block_size = block_size
+
         self.pysoundio = PySoundIo(backend=None)
         self.pysoundio.start_output_stream(
             device_id=output_device,
             channels=1,
             sample_rate=rate,
-            block_size=4096,
+            block_size=self.block_size,
             dtype=SoundIoFormatFloat32LE,
             write_callback=self.callback
         )
-        self.current_block = 0
-        self.total_blocks = int(len(self.data) / 4096)
+        self.cb = 0
+        self.total_blocks = len(self.data)
+        self.timer = self.total_blocks / float(rate)
 
     def close(self):
         self.pysoundio.close()
 
     def callback(self, data, length):
-        current = self.current_block
-        data[:] = struct.pack('%sf' % 4096, *self.data[0][current:current + 4096])
-        self.current_block += 4096
+        dlen = (self.block_size if
+            self.cb + self.block_size <= self.total_blocks else
+            self.total_blocks - self.cb)
+        data[:] = struct.pack('%sf' % dlen, *self.data[self.cb:self.cb + dlen])
+        self.cb += dlen
 
 
 if __name__ == '__main__':
@@ -54,18 +64,17 @@ if __name__ == '__main__':
     )
     parser.add_argument('infile', help='WAV output file name')
     parser.add_argument('--backend', help='Backend to use (optional)')
-    parser.add_argument('--blocksize', help='Block size (optional)')
-    parser.add_argument('--rate', default=44100, help='Sample rate (optional)')
-    parser.add_argument('--channels', type=int, default=2, help='Mono or stereo (optional)')
+    parser.add_argument('--blocksize', type=int, default=4096, help='Block size (optional)')
     parser.add_argument('--device', help='Output device id (optional)')
     args = parser.parse_args()
 
-    player = Player(args.infile, args.backend, args.device)
+    player = Player(args.infile, args.backend, args.device, args.blocksize)
     print('Playing...')
+    print('CTRL-C to exit')
 
-    print(player.current_block)
-    print(player.total_blocks)
-    while player.current_block <= player.total_blocks:
-        pass
+    try:
+        time.sleep(player.timer)
+    except KeyboardInterrupt:
+        print('Exiting...')
 
     player.close()
