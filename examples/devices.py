@@ -2,8 +2,6 @@
 devices.py
 
 List the available input and output devices on the system and their properties.
-Supports watching for changes and specifying backend to use.
-
 """
 import argparse
 

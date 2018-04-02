@@ -56,6 +56,37 @@ on Linux machines you will need to install libsndfile ::
     apt-get install libsndfile
 
 
+:download:`devices.py <../examples/devices.py>`
+
+List the available input and output devices on the system and their properties. ::
+
+    python devices.py
+
+
+:download:`record.py <../examples/record.py>`
+
+Records data from microphone and saves to a wav file.
+Supports specifying backend, device, sample rate, block size. ::
+
+    python record.py out.wav --device 0 --rate 44100
+
+
+:download:`play.py <../examples/play.py>`
+
+Plays a wav file through the speakers.
+Supports specifying backend, device, block size. ::
+
+    python play.py in.wav --device 0
+
+
+:download:`sine.py <../examples/sine.py>`
+
+Plays a sine wave through the speakers.
+Supports specifying backend, device, sample rate, block size. ::
+
+    python sine.py --freq 442
+
+
 Testing
 -------
 
