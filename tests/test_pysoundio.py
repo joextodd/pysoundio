@@ -159,12 +159,13 @@ class TestPySoundIo(unittest.TestCase):
             channels=2)
         self.assertIsNotNone(self.sio.input_stream)
 
-    # def test_pause_input_stream(self):
-    #     self.sio.start_input_stream(
-    #         sample_rate=44100,
-    #         dtype=pysoundio.SoundIoFormatFloat32LE,
-    #         channels=2)
-    #     self.sio.pause_input_stream(True)
+    def test_pause_input_stream(self):
+        self.sio.start_input_stream(
+            sample_rate=44100,
+            dtype=pysoundio.SoundIoFormatFloat32LE,
+            channels=2)
+        self.sio.pause_input_stream(True)
+        self.sio.input_stream = None
 
     def test_start_input_stream_device(self):
         self.sio.start_input_stream(
@@ -258,12 +259,13 @@ class TestPySoundIo(unittest.TestCase):
         self.assertIsInstance(self.sio.get_output_latency(0.2), int)
         self.sio.output_stream = None
 
-    # def test_pause_output_stream(self):
-    #     self.sio.start_output_stream(
-    #         sample_rate=44100,
-    #         dtype=pysoundio.SoundIoFormatFloat32LE,
-    #         channels=2)
-    #     self.sio.pause_output_stream(True)
+    def test_pause_output_stream(self):
+        self.sio.start_output_stream(
+            sample_rate=44100,
+            dtype=pysoundio.SoundIoFormatFloat32LE,
+            channels=2)
+        self.sio.pause_output_stream(True)
+        self.sio.output_stream = None
 
     def test_start_output_stream(self):
         self.sio.start_output_stream(
@@ -352,9 +354,6 @@ class TestOutputProcessing(unittest.TestCase):
         self.sio.testing = True
         self.callback_called = False
 
-    def tearDown(self):
-        self.sio.close()
-
     def callback(self, data, length):
         self.callback_called = True
 
@@ -369,4 +368,3 @@ class TestOutputProcessing(unittest.TestCase):
         thread = pysoundio.pysoundio._OutputProcessingThread(parent=self.sio, block_size=4096)
         thread.run()
         self.assertTrue(self.callback_called)
-        self.sio.output_stream = None
