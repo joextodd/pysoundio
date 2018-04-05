@@ -1218,7 +1218,6 @@ pysoundio__ring_buffer_destroy(PyObject *self, PyObject *args)
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
 
     soundio_ring_buffer_destroy(buffer);
-    // Py_DECREF(buffer);
     Py_RETURN_NONE;
 }
 
@@ -1234,7 +1233,6 @@ pysoundio__ring_buffer_fill_count(PyObject *self, PyObject *args)
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
     int bytes = soundio_ring_buffer_fill_count(buffer);
 
-    // Py_DECREF(buffer);
     return Py_BuildValue("i", bytes);
 }
 
@@ -1250,7 +1248,6 @@ pysoundio__ring_buffer_read_ptr(PyObject *self, PyObject *args)
     int fill_bytes = soundio_ring_buffer_fill_count(buffer);
     char *ptr = soundio_ring_buffer_read_ptr(buffer);
 
-    // Py_DECREF(buffer);
     return Py_BuildValue(FORMAT_DATA_READ_ID, ptr, fill_bytes);
 }
 
@@ -1266,7 +1263,6 @@ pysoundio__ring_buffer_advance_read_ptr(PyObject *self, PyObject *args)
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
     soundio_ring_buffer_advance_read_ptr(buffer, count);
 
-    // Py_DECREF(buffer);
     Py_RETURN_NONE;
 }
 
@@ -1286,8 +1282,6 @@ pysoundio__ring_buffer_write_ptr(PyObject *self, PyObject *args)
     data = PyByteArray_AsString((PyObject *)pdata);
     memcpy(ptr, data, length);
 
-    // Py_DECREF(buffer);
-    // Py_DECREF(data);
     Py_RETURN_NONE;
 }
 
@@ -1302,7 +1296,6 @@ pysoundio__ring_buffer_free_count(PyObject *self, PyObject *args)
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
     int free_count = soundio_ring_buffer_free_count(buffer);
 
-    // Py_DECREF(buffer);
     return Py_BuildValue("i", free_count);
 }
 
@@ -1318,7 +1311,6 @@ pysoundio__ring_buffer_advance_write_ptr(PyObject *self, PyObject *args)
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
     soundio_ring_buffer_advance_write_ptr(buffer, count);
 
-    // Py_DECREF(buffer);
     Py_RETURN_NONE;
 }
 
@@ -1333,7 +1325,6 @@ pysoundio__ring_buffer_clear(PyObject *self, PyObject *args)
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
     soundio_ring_buffer_clear(buffer);
 
-    // Py_DECREF(buffer);
     Py_RETURN_NONE;
 }
 
@@ -1348,7 +1339,6 @@ pysoundio__ring_buffer_capacity(PyObject *self, PyObject *args)
     struct SoundIoRingBuffer *buffer = PyLong_AsVoidPtr(data);
     int capacity = soundio_ring_buffer_capacity(buffer);
 
-    // Py_DECREF(buffer);
     return Py_BuildValue("i", capacity);
 }
 

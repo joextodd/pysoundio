@@ -75,6 +75,14 @@ class _OutputProcessingThread(threading.Thread):
 class PySoundIo(object):
 
     def __init__(self, backend=None):
+        """
+        Initialise PySoundIo.
+        Connect to a specific backend, or the default.
+
+        Parameters
+        ----------
+        backend: (SoundIoBackend) see `Backends`_. (optional)
+        """
         self.backend = backend
         self.testing = False
 
@@ -100,11 +108,9 @@ class PySoundIo(object):
         Close libsoundio connections
         """
         if self.input_stream:
-            soundio.instream_pause(True)
             soundio.instream_destroy()
             self.input_stream = None
         if self.output_stream:
-            soundio.outstream_pause(True)
             soundio.outstream_destroy()
             self.output_stream = None
         if self.input_buffer:
@@ -292,7 +298,7 @@ class PySoundIo(object):
         Parameters
         ----------
         device: (SoundIoDevice) device object
-        format: (SoundIoFormat) see formats
+        format: (SoundIoFormat) see `Formats`_.
 
         Returns
         -------
@@ -440,6 +446,16 @@ class PySoundIo(object):
         """
         soundio.instream_start()
 
+    def pause_input_stream(self, pause):
+        """
+        Pause input stream
+
+        Parameters
+        ----------
+        pause: (bool) True to pause, False to unpause
+        """
+        soundio.instream_pause(pause)
+
     def get_input_latency(self, out_latency):
         """
         Obtain the number of seconds that the next frame of sound
@@ -491,7 +507,7 @@ class PySoundIo(object):
         ----------
         device_id: (int) input device id
         sample_rate: (int) desired sample rate (optional)
-        dtype: (SoundIoFormat) desired format, see formats (optional)
+        dtype: (SoundIoFormat) desired format, see `Formats`_. (optional)
         block_size: (int) desired block size (optional)
         channels: (int) number of channels [1: mono, 2: stereo] (optional)
         read_callback: (fn) function to call with data, the function must have
@@ -588,6 +604,16 @@ class PySoundIo(object):
         """
         soundio.outstream_start()
 
+    def pause_output_stream(self, pause):
+        """
+        Pause output stream
+
+        Parameters
+        ----------
+        pause: (bool) True to pause, False to unpause
+        """
+        soundio.outstream_pause(pause)
+
     def _write_callback(self, size):
         """
         Internal write callback.
@@ -636,7 +662,7 @@ class PySoundIo(object):
         ----------
         device_id: (int) output device id
         sample_rate: (int) desired sample rate (optional)
-        dtype: (SoundIoFormat) desired format, see formats (optional)
+        dtype: (SoundIoFormat) desired format, see `Formats`_. (optional)
         block_size: (int) desired block size (optional)
         channels: (int) number of channels [1: mono, 2: stereo] (optional)
         write_callback: (fn) function to call with data, the function must have

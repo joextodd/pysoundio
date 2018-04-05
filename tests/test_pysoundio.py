@@ -3,12 +3,22 @@ test_pysoundio.py
 
 PySoundIo Test Suite
 """
+import os
 import unittest
 import pysoundio
 import _soundiox
 
 
 class TestPySoundIo(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sio = pysoundio.PySoundIo(
+            backend=pysoundio.SoundIoBackendDummy)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.sio.close()
 
     def setUp(self):
         self.sio = pysoundio.PySoundIo(
@@ -22,8 +32,7 @@ class TestPySoundIo(unittest.TestCase):
         self.callback_called = False
         self.error_callback_called = False
 
-    def tearDown(self):
-        self.sio.close()
+        self.is_travis = 'TRAVIS' in os.environ
 
     # - Device API
 
@@ -150,6 +159,13 @@ class TestPySoundIo(unittest.TestCase):
             channels=2)
         self.assertIsNotNone(self.sio.input_stream)
 
+    # def test_pause_input_stream(self):
+    #     self.sio.start_input_stream(
+    #         sample_rate=44100,
+    #         dtype=pysoundio.SoundIoFormatFloat32LE,
+    #         channels=2)
+    #     self.sio.pause_input_stream(True)
+
     def test_start_input_stream_device(self):
         self.sio.start_input_stream(
             device_id=0,
@@ -188,12 +204,19 @@ class TestPySoundIo(unittest.TestCase):
 
     # -- Output Stream API
 
+    def fill_output_buffer(self):
+        self.sio._create_output_ring_buffer(44100 * 8)
+        data = bytearray(b'\x00' * 4096 * 8)
+        _soundiox.ring_buffer_write_ptr(self.sio.output_buffer, data, len(data))
+        _soundiox.ring_buffer_advance_write_ptr(self.sio.output_buffer, len(data))
+
     def test__create_output_ring_buffer(self):
         capacity = 44100 * 8
         self.assertIsNotNone(self.sio._create_output_ring_buffer(capacity))
 
     def test__create_output_stream(self):
         self.sio.get_default_output_device()
+        self.fill_output_buffer()
         stream = self.sio._create_output_stream()
         self.assertIsNotNone(stream)
         self.sio.output_stream = None
@@ -201,15 +224,18 @@ class TestPySoundIo(unittest.TestCase):
     def test__create_output_stream_blocksize(self):
         self.sio.block_size = 4096
         self.sio.get_default_output_device()
+        self.fill_output_buffer()
         stream = self.sio._create_output_stream()
         self.assertIsNotNone(stream)
         self.sio.output_stream = None
 
     def test__open_output_stream(self):
         self.sio.get_default_output_device()
+        self.fill_output_buffer()
         self.sio._create_output_stream()
         self.sio._open_output_stream()
         self.assertIsNotNone(self.sio.block_size)
+        self.sio.output_stream = None
 
     def test_clear_output_buffer(self):
         capacity = 44100 * 8
@@ -230,6 +256,14 @@ class TestPySoundIo(unittest.TestCase):
             dtype=pysoundio.SoundIoFormatFloat32LE,
             channels=2)
         self.assertIsInstance(self.sio.get_output_latency(0.2), int)
+        self.sio.output_stream = None
+
+    # def test_pause_output_stream(self):
+    #     self.sio.start_output_stream(
+    #         sample_rate=44100,
+    #         dtype=pysoundio.SoundIoFormatFloat32LE,
+    #         channels=2)
+    #     self.sio.pause_output_stream(True)
 
     def test_start_output_stream(self):
         self.sio.start_output_stream(
@@ -237,6 +271,7 @@ class TestPySoundIo(unittest.TestCase):
             dtype=pysoundio.SoundIoFormatFloat32LE,
             channels=2)
         self.assertIsNotNone(self.sio.output_stream)
+        self.sio.output_stream = None
 
     def test_start_output_stream_device(self):
         self.sio.start_output_stream(
@@ -245,6 +280,7 @@ class TestPySoundIo(unittest.TestCase):
             dtype=pysoundio.SoundIoFormatFloat32LE,
             channels=2)
         self.assertIsNotNone(self.sio.output_stream)
+        self.sio.output_stream = None
 
     def test_start_output_invalid_rate(self):
         with self.assertRaises(pysoundio.PySoundIoError):
@@ -259,6 +295,7 @@ class TestPySoundIo(unittest.TestCase):
             channels=2)
         self.assertIsNotNone(self.sio.output_stream)
         self.assertIsInstance(self.sio.sample_rate, int)
+        self.sio.output_stream = None
 
     def test_start_output_invalid_format(self):
         with self.assertRaises(pysoundio.PySoundIoError):
@@ -273,6 +310,7 @@ class TestPySoundIo(unittest.TestCase):
             channels=2)
         self.assertIsNotNone(self.sio.output_stream)
         self.assertIsInstance(self.sio.format, int)
+        self.sio.output_stream = None
 
 
 class TestInputProcessing(unittest.TestCase):
@@ -288,7 +326,7 @@ class TestInputProcessing(unittest.TestCase):
     def callback(self, data, length):
         self.callback_called = True
 
-    def test_callback(self):
+    def test_read_callback(self):
         self.sio.start_input_stream(
             sample_rate=44100,
             dtype=pysoundio.SoundIoFormatFloat32LE,
@@ -306,28 +344,29 @@ class TestInputProcessing(unittest.TestCase):
         self.assertTrue(self.callback_called)
 
 
-# class TestOutputProcessing(unittest.TestCase):
+class TestOutputProcessing(unittest.TestCase):
 
-#     def setUp(self):
-#         self.sio = pysoundio.PySoundIo(
-#             backend=pysoundio.SoundIoBackendDummy)
-#         self.sio.testing = True
-#         self.callback_called = False
+    def setUp(self):
+        self.sio = pysoundio.PySoundIo(
+            backend=pysoundio.SoundIoBackendDummy)
+        self.sio.testing = True
+        self.callback_called = False
 
-#     def tearDown(self):
-#         self.sio.close()
+    def tearDown(self):
+        self.sio.close()
 
-#     def callback(self, data, length):
-#         self.callback_called = True
+    def callback(self, data, length):
+        self.callback_called = True
 
-#     def test_callback(self):
-#         self.sio.start_output_stream(
-#             sample_rate=44100,
-#             dtype=pysoundio.SoundIoFormatFloat32LE,
-#             channels=2,
-#             block_size=4096,
-#             write_callback=self.callback)
-#         self.assertIsNotNone(self.sio.output_stream)
-#         thread = pysoundio.pysoundio._OutputProcessingThread(parent=self.sio, block_size=4096)
-#         thread.run()
-#         self.assertTrue(self.callback_called)
+    def test_write_callback(self):
+        self.sio.start_output_stream(
+            sample_rate=44100,
+            dtype=pysoundio.SoundIoFormatFloat32LE,
+            channels=2,
+            block_size=4096,
+            write_callback=self.callback)
+        self.assertIsNotNone(self.sio.output_stream)
+        thread = pysoundio.pysoundio._OutputProcessingThread(parent=self.sio, block_size=4096)
+        thread.run()
+        self.assertTrue(self.callback_called)
+        self.sio.output_stream = None

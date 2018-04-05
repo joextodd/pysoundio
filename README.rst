@@ -3,6 +3,8 @@ PySoundIo
 
 .. image:: https://travis-ci.org/joextodd/pysoundio.svg?branch=master
     :target: https://travis-ci.org/joextodd/pysoundio
+.. image:: https://coveralls.io/repos/github/joextodd/pysoundio/badge.svg
+    :target: https://coveralls.io/github/joextodd/pysoundio
 .. image:: https://readthedocs.org/projects/pysoundio/badge/?version=latest
     :target: http://pysoundio.readthedocs.io/en/latest/?badge=latest
 
@@ -26,7 +28,7 @@ Dependencies
     apt-get install libsoundio-dev
 
 Ubuntu distributions link to an older version of libsoundio,
-so to use the latest version you will need to install from `source. <http://libsound.io/#releases>`_.
+so to use the latest version you will need to install from `source <http://libsound.io/#releases>`_.
 
 
 Installation

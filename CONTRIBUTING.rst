@@ -13,6 +13,9 @@ You should get the latest version from GitHub_::
 
 .. _GitHub: https://github.com/joextodd/pysoundio/
 
+Before submitting a pull request, make sure all tests are passing,
+and all of the example scripts run as they as should.
+
 If you make changes to the documentation, you can locally re-create the HTML
 pages using Sphinx_.
 You can install it and the read the docs theme with::
