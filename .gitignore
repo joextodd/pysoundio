@@ -8,3 +8,4 @@ _soundiox*.so
 _build
 _static
 .coveralls.yml
+.coverage

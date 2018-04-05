@@ -15,11 +15,11 @@ class TestInitialisation(unittest.TestCase):
         self.s = soundio.create()
 
     def tearDown(self):
-        soundio.destroy(self.s)
+        soundio.destroy()
 
     def test_connect(self):
         self.assertEqual(
-            soundio.connect_backend(self.s, pysoundio.SoundIoBackendDummy), 0)
+            soundio.connect_backend(pysoundio.SoundIoBackendDummy), 0)
 
     def test_version(self):
         self.assertIsInstance(soundio.version_string(), str)
@@ -31,7 +31,7 @@ class TestInitialisation(unittest.TestCase):
         )
 
     def test_backend_count(self):
-        self.assertIsInstance(soundio.backend_count(self.s), int)
+        self.assertIsInstance(soundio.backend_count(), int)
 
 
 class TestDeviceAPI(unittest.TestCase):
@@ -39,50 +39,50 @@ class TestDeviceAPI(unittest.TestCase):
     def setUp(self):
         self.device = None
         self.s = soundio.create()
-        soundio.connect_backend(self.s, pysoundio.SoundIoBackendDummy)
-        soundio.flush(self.s)
+        soundio.connect_backend(pysoundio.SoundIoBackendDummy)
+        soundio.flush()
 
     def tearDown(self):
         if self.device:
             soundio.device_unref(self.device)
-        soundio.destroy(self.s)
+        soundio.destroy()
 
     def test_get_input_device_count(self):
-        self.assertNotEqual(soundio.get_input_device_count(self.s), -1)
+        self.assertNotEqual(soundio.get_input_device_count(), -1)
 
     def test_get_output_device_count(self):
-        self.assertNotEqual(soundio.get_output_device_count(self.s), -1)
+        self.assertNotEqual(soundio.get_output_device_count(), -1)
 
     def test_default_input_device_index(self):
-        self.assertNotEqual(soundio.default_input_device_index(self.s), -1)
+        self.assertNotEqual(soundio.default_input_device_index(), -1)
 
     def test_default_output_device_index(self):
-        self.assertNotEqual(soundio.default_output_device_index(self.s), -1)
+        self.assertNotEqual(soundio.default_output_device_index(), -1)
 
     def test_get_input_device(self):
-        default_index = soundio.default_input_device_index(self.s)
-        self.device = soundio.get_input_device(self.s, default_index)
+        default_index = soundio.default_input_device_index()
+        self.device = soundio.get_input_device(default_index)
         self.assertIsNotNone(self.device)
 
     def test_get_output_device(self):
-        default_index = soundio.default_output_device_index(self.s)
-        self.device = soundio.get_output_device(self.s, default_index)
+        default_index = soundio.default_output_device_index()
+        self.device = soundio.get_output_device(default_index)
         self.assertIsNotNone(self.device)
 
     def test_device_supports_sample_rate(self):
-        default_index = soundio.default_output_device_index(self.s)
-        self.device = soundio.get_output_device(self.s, default_index)
+        default_index = soundio.default_output_device_index()
+        self.device = soundio.get_output_device(default_index)
         self.assertIsNotNone(soundio.device_supports_sample_rate(self.device, 44100))
 
     def test_device_supports_format(self):
-        default_index = soundio.default_output_device_index(self.s)
-        self.device = soundio.get_output_device(self.s, default_index)
+        default_index = soundio.default_output_device_index()
+        self.device = soundio.get_output_device(default_index)
         self.assertIsNotNone(soundio.device_supports_format(
             self.device, pysoundio.SoundIoFormatFloat32LE))
 
     def test_device_sort_channel_layouts(self):
-        default_index = soundio.default_output_device_index(self.s)
-        self.device = soundio.get_output_device(self.s, default_index)
+        default_index = soundio.default_output_device_index()
+        self.device = soundio.get_output_device(default_index)
         soundio.device_sort_channel_layouts(self.device)
 
     def test_channel_layout_get_default(self):
@@ -104,7 +104,7 @@ class TestDeviceAPI(unittest.TestCase):
         self.assertIsNotNone(soundio.channel_layout_get_builtin(0))
 
     def test_force_device_scan(self):
-        soundio.force_device_scan(self.s)
+        soundio.force_device_scan()
 
     def test_bytes_per_frame(self):
         self.assertEqual(soundio.get_bytes_per_frame(
@@ -124,18 +124,18 @@ class TestInputStreamAPI(unittest.TestCase):
     def setUp(self):
         self.instream = None
         self.s = soundio.create()
-        soundio.connect_backend(self.s, pysoundio.SoundIoBackendDummy)
-        soundio.flush(self.s)
-        default_index = soundio.default_input_device_index(self.s)
-        self.device = soundio.get_input_device(self.s, default_index)
-        self.buffer = soundio.input_ring_buffer_create(self.s, 44100 * 8)
+        soundio.connect_backend(pysoundio.SoundIoBackendDummy)
+        soundio.flush()
+        default_index = soundio.default_input_device_index()
+        self.device = soundio.get_input_device(default_index)
+        self.buffer = soundio.input_ring_buffer_create(44100 * 8)
 
     def tearDown(self):
         if self.instream:
-            soundio.instream_destroy(self.instream)
+            soundio.instream_destroy()
         if self.device:
             soundio.device_unref(self.device)
-        soundio.destroy(self.s)
+        soundio.destroy()
 
     def callback(self):
         pass
@@ -152,17 +152,17 @@ class TestInputStreamAPI(unittest.TestCase):
 
     def test_instream_open(self):
         self.setup_stream()
-        self.assertEqual(soundio.instream_open(self.instream), 0)
+        self.assertEqual(soundio.instream_open(), 0)
 
     def test_instream_start(self):
         self.setup_stream()
-        soundio.instream_open(self.instream)
-        self.assertEqual(soundio.instream_start(self.instream), 0)
+        soundio.instream_open()
+        self.assertEqual(soundio.instream_start(), 0)
 
     def test_instream_get_latency(self):
         self.setup_stream()
-        soundio.instream_open(self.instream)
-        self.assertIsInstance(soundio.instream_get_latency(self.instream, 0.42), int)
+        soundio.instream_open()
+        self.assertIsInstance(soundio.instream_get_latency(0.42), int)
 
 
 class TestOutputStreamAPI(unittest.TestCase):
@@ -170,18 +170,20 @@ class TestOutputStreamAPI(unittest.TestCase):
     def setUp(self):
         self.outstream = None
         self.s = soundio.create()
-        soundio.connect_backend(self.s, pysoundio.SoundIoBackendDummy)
-        soundio.flush(self.s)
-        default_index = soundio.default_output_device_index(self.s)
-        self.device = soundio.get_output_device(self.s, default_index)
-        self.buffer = soundio.input_ring_buffer_create(self.s, 44100 * 8)
+        soundio.connect_backend(pysoundio.SoundIoBackendDummy)
+        soundio.flush()
+        default_index = soundio.default_output_device_index()
+        self.device = soundio.get_output_device(default_index)
+        self.buffer = soundio.input_ring_buffer_create(44100 * 8)
 
     def tearDown(self):
         if self.outstream:
-            soundio.outstream_destroy(self.outstream)
+            soundio.outstream_pause(True)
+            soundio.outstream_destroy()
         if self.device:
             soundio.device_unref(self.device)
-        soundio.destroy(self.s)
+        soundio.disconnect()
+        soundio.destroy()
 
     def callback(self):
         pass
@@ -199,26 +201,26 @@ class TestOutputStreamAPI(unittest.TestCase):
 
     def test_outstream_open(self):
         self.setup_stream()
-        self.assertEqual(soundio.outstream_open(self.outstream), 0)
+        self.assertEqual(soundio.outstream_open(), 0)
 
-    def test_outstream_start(self):
-        self.setup_stream()
-        soundio.outstream_open(self.outstream)
-        self.assertEqual(soundio.outstream_start(self.outstream), 0)
+    # def test_outstream_start(self):
+    #     self.setup_stream()
+    #     soundio.outstream_open()
+    #     self.assertEqual(soundio.outstream_start(), 0)
 
     def test_outstream_get_latency(self):
         self.setup_stream()
-        soundio.outstream_open(self.outstream)
-        self.assertIsInstance(soundio.outstream_get_latency(self.outstream, 0.42), int)
+        soundio.outstream_open()
+        self.assertIsInstance(soundio.outstream_get_latency(0.42), int)
 
 
 class TestRingBufferAPI(unittest.TestCase):
 
     def setUp(self):
         self.s = soundio.create()
-        soundio.connect_backend(self.s, pysoundio.SoundIoBackendDummy)
-        soundio.flush(self.s)
-        self.buffer = soundio.input_ring_buffer_create(self.s, 44100)
+        soundio.connect_backend(pysoundio.SoundIoBackendDummy)
+        soundio.flush()
+        self.buffer = soundio.input_ring_buffer_create(44100)
 
         # Fill with some data for libsoundio < v1.1.0
         data = bytearray(b'' * 42)
@@ -228,7 +230,7 @@ class TestRingBufferAPI(unittest.TestCase):
     def tearDown(self):
         if self.buffer:
             soundio.ring_buffer_destroy(self.buffer)
-        soundio.destroy(self.s)
+        soundio.destroy()
 
     def test_ring_buffer_fill_count(self):
         self.assertEqual(soundio.ring_buffer_fill_count(self.buffer), 42)
@@ -255,7 +257,7 @@ class TestRingBufferAPI(unittest.TestCase):
         soundio.ring_buffer_advance_write_ptr(self.buffer, 16)
         self.assertEqual(soundio.ring_buffer_fill_count(self.buffer), 58)
 
-    def test_outstream_clear_buffer(self):
+    def test_ring_buffer_clear(self):
         soundio.ring_buffer_clear(self.buffer)
 
     def test_ring_buffer_capacity(self):
