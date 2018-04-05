@@ -51,9 +51,13 @@ Some of the examples require `pysoundfile <https://pysoundfile.readthedocs.io/en
 
     pip install pysoundfile
 
-on Linux machines you will need to install libsndfile ::
+* macOS ::
 
-    apt-get install libsndfile
+    brew install libsndfile
+
+* Ubuntu / Debian ::
+
+    apt-get install libsndfile1
 
 
 :download:`devices.py <../examples/devices.py>`

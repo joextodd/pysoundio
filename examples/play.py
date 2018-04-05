@@ -51,8 +51,8 @@ class Player(object):
 
     def callback(self, data, length):
         dlen = (self.block_size if
-            self.cb + self.block_size <= self.total_blocks else
-            self.total_blocks - self.cb)
+                self.cb + self.block_size <= self.total_blocks else
+                self.total_blocks - self.cb)
         data[:] = struct.pack('%sf' % dlen, *self.data[self.cb:self.cb + dlen])
         self.cb += dlen
 

@@ -49,6 +49,11 @@ static PyMethodDef soundio_methods[] = {
         "connect to the default backend"
     },
     {
+        "disconnect",
+        pysoundio__disconnect, METH_VARARGS,
+        "disconnect"
+    },
+    {
         "connect_backend",
         pysoundio__connect_backend, METH_VARARGS,
         "connect to a specific backend"
@@ -219,6 +224,11 @@ static PyMethodDef soundio_methods[] = {
         "start input stream"
     },
     {
+        "instream_pause",
+        pysoundio__instream_pause, METH_VARARGS,
+        "pause input stream"
+    },
+    {
         "instream_get_latency",
         pysoundio__instream_get_latency, METH_VARARGS,
         "get next input frame length in seconds"
@@ -247,6 +257,11 @@ static PyMethodDef soundio_methods[] = {
         "outstream_start",
         pysoundio__outstream_start, METH_VARARGS,
         "start output stream"
+    },
+    {
+        "outstream_pause",
+        pysoundio__outstream_pause, METH_VARARGS,
+        "pause output stream"
     },
     {
         "outstream_clear_buffer",
@@ -388,6 +403,16 @@ pysoundio__connect(PyObject *self, PyObject *args)
         return NULL;
     }
     return Py_BuildValue("i", err);
+}
+
+static PyObject *
+pysoundio__disconnect(PyObject *self, PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, ""))
+        return NULL;
+
+    soundio_disconnect(rc.soundio);
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -884,34 +909,25 @@ pysoundio__instream_create(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Py_XINCREF(instream);
     return PyLong_FromVoidPtr(rc.input_stream);
 }
 
 static PyObject *
 pysoundio__instream_destroy(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    struct SoundIoInStream *instream = PyLong_AsVoidPtr(data);
-
-    soundio_instream_destroy(instream);
-    // Py_XDECREF(instream);
+    soundio_instream_destroy(rc.input_stream);
+    rc.input_stream = NULL;
     Py_RETURN_NONE;
 }
 
 static PyObject *
 pysoundio__instream_open(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
-
-    // struct SoundIoInStream *instream = PyLong_AsVoidPtr(data);
 
     int err = soundio_instream_open(rc.input_stream);
     if (err) {
@@ -925,12 +941,8 @@ pysoundio__instream_open(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__instream_start(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
-
-    // struct SoundIoInStream *instream = PyLong_AsVoidPtr(data);
 
     int err = soundio_instream_start(rc.input_stream);
     if (err) {
@@ -941,15 +953,28 @@ pysoundio__instream_start(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-pysoundio__instream_get_latency(PyObject *self, PyObject *args)
+pysoundio__instream_pause(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-    double out_latency;
+    int *pause;
 
-    if (!PyArg_ParseTuple(args, "Od", &data, &out_latency))
+    if (!PyArg_ParseTuple(args, "i", &pause))
         return NULL;
 
-    // struct SoundIoInStream *instream = PyLong_AsVoidPtr(data);
+    int err = soundio_instream_pause(rc.input_stream, (bool)pause);
+    if (err) {
+        PyErr_SetString(PySoundIoError, soundio_strerror(err));
+        return NULL;
+    }
+    return Py_BuildValue("i", err);
+}
+
+static PyObject *
+pysoundio__instream_get_latency(PyObject *self, PyObject *args)
+{
+    double out_latency;
+
+    if (!PyArg_ParseTuple(args, "d", &out_latency))
+        return NULL;
 
     int seconds = soundio_instream_get_latency(rc.input_stream, &out_latency);
     return Py_BuildValue("i", seconds);
@@ -1063,12 +1088,8 @@ pysoundio__outstream_create(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__outstream_destroy(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
-
-    // struct SoundIoOutStream *outstream = PyLong_AsVoidPtr(data);
 
     soundio_outstream_destroy(rc.output_stream);
     rc.output_stream = NULL;
@@ -1078,12 +1099,8 @@ pysoundio__outstream_destroy(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__outstream_open(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
-
-    // struct SoundIoOutStream *outstream = PyLong_AsVoidPtr(data);
 
     int err = soundio_outstream_open(rc.output_stream);
     if (err) {
@@ -1096,12 +1113,8 @@ pysoundio__outstream_open(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__outstream_start(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
-
-    // struct SoundIoOutStream *outstream = PyLong_AsVoidPtr(data);
 
     int err = soundio_outstream_start(rc.output_stream);
     if (err) {
@@ -1113,11 +1126,25 @@ pysoundio__outstream_start(PyObject *self, PyObject *args)
 }
 
 static PyObject *
+pysoundio__outstream_pause(PyObject *self, PyObject *args)
+{
+    int *pause;
+
+    if (!PyArg_ParseTuple(args, "i", &pause))
+        return NULL;
+
+    int err = soundio_outstream_pause(rc.output_stream, (bool)pause);
+    if (err) {
+        PyErr_SetString(PySoundIoError, soundio_strerror(err));
+        return NULL;
+    }
+    return Py_BuildValue("i", err);
+}
+
+static PyObject *
 pysoundio__outstream_clear_buffer(PyObject *self, PyObject *args)
 {
-    PyObject *data;
-
-    if (!PyArg_ParseTuple(args, "O", &data))
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     int err = soundio_outstream_clear_buffer(rc.output_stream);
@@ -1132,13 +1159,10 @@ pysoundio__outstream_clear_buffer(PyObject *self, PyObject *args)
 static PyObject *
 pysoundio__outstream_get_latency(PyObject *self, PyObject *args)
 {
-    PyObject *data;
     double out_latency;
 
-    if (!PyArg_ParseTuple(args, "Od", &data, &out_latency))
+    if (!PyArg_ParseTuple(args, "d", &out_latency))
         return NULL;
-
-    // struct SoundIoOutStream *outstream = PyLong_AsVoidPtr(data);
 
     int seconds = soundio_outstream_get_latency(rc.output_stream, &out_latency);
     return Py_BuildValue("i", seconds);
@@ -1263,7 +1287,7 @@ pysoundio__ring_buffer_write_ptr(PyObject *self, PyObject *args)
     memcpy(ptr, data, length);
 
     // Py_DECREF(buffer);
-    Py_DECREF(data);
+    // Py_DECREF(data);
     Py_RETURN_NONE;
 }
 
@@ -1367,9 +1391,9 @@ init_soundiox(void)
 #endif
 
     // Errors
-    PySoundIoError = PyErr_NewException("pysoundio.error", NULL, NULL);
+    PySoundIoError = PyErr_NewException("pysoundio.PySoundIoError", NULL, NULL);
     Py_INCREF(PySoundIoError);
-    PyModule_AddObject(m, "error", PySoundIoError);
+    PyModule_AddObject(m, "PySoundIoError", PySoundIoError);
 
     // Constants
     PyModule_AddIntMacro(m, SOUNDIO_MAX_CHANNELS);

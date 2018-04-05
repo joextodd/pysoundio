@@ -35,6 +35,8 @@ pysoundio__destroy(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__connect(PyObject *self, PyObject *args);
 static PyObject *
+pysoundio__disconnect(PyObject *self, PyObject *args);
+static PyObject *
 pysoundio__connect_backend(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__backend_count(PyObject *self, PyObject *args);
@@ -115,6 +117,8 @@ pysoundio__instream_open(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__instream_start(PyObject *self, PyObject *args);
 static PyObject *
+pysoundio__instream_pause(PyObject *self, PyObject *args);
+static PyObject *
 pysoundio__instream_get_latency(PyObject *self, PyObject *args);
 
 /**
@@ -130,6 +134,8 @@ static PyObject *
 pysoundio__outstream_open(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__outstream_start(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__outstream_pause(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__outstream_clear_buffer(PyObject *self, PyObject *args);
 static PyObject *
