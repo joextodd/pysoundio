@@ -6,6 +6,8 @@
 
 .. include:: ../CONTRIBUTING.rst
 
+.. include:: ./constants.rst
+
 
 API Reference
 -------------
