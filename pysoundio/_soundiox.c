@@ -882,7 +882,7 @@ pysoundio__set_read_callback(PyObject *self, PyObject *args)
             return NULL;
         }
         Py_XINCREF(temp);
-        // Py_XDECREF(rc.read_callback);
+        Py_XDECREF(rc.read_callback);
         rc.read_callback = temp;
         Py_RETURN_NONE;
     }
@@ -1008,6 +1008,7 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
 {
     struct RecordContext *rc = outstream->userdata;
     struct SoundIoChannelArea *areas;
+    int frame_count;
     int err;
 
     if (!rc->output_buffer)
@@ -1020,8 +1021,34 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
     int read_count = min_int(frame_count_max, fill_count);
     int frames_left = read_count;
 
+    if (frame_count_min > fill_count) {
+        frames_left = frame_count_min;
+        while (frames_left > 0) {
+            frame_count = frames_left;
+            if (frame_count <= 0)
+                return;
+            if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count))) {
+                PyErr_SetString(PySoundIoError, soundio_strerror(err));
+                return;
+            }
+            if (frame_count <= 0)
+                return;
+            for (int frame = 0; frame < frame_count; frame += 1) {
+                for (int ch = 0; ch < outstream->layout.channel_count; ch += 1) {
+                    memset(areas[ch].ptr, 0, outstream->bytes_per_sample);
+                    areas[ch].ptr += areas[ch].step;
+                }
+            }
+            if ((err = soundio_outstream_end_write(outstream))) {
+                PyErr_SetString(PySoundIoError, soundio_strerror(err));
+                return;
+            }
+            frames_left -= frame_count;
+        }
+    }
+
     while (frames_left > 0) {
-        int frame_count = frames_left;
+        frame_count = frames_left;
         if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count))) {
             PyErr_SetString(PySoundIoError, soundio_strerror(err));
             return;
