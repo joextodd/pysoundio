@@ -20,8 +20,6 @@ class TestPySoundIo(unittest.TestCase):
         cls.sio.close()
 
     def setUp(self):
-        self.sio = pysoundio.PySoundIo(
-            backend=pysoundio.SoundIoBackendDummy)
         self.sio.channels = 2
         self.sio.sample_rate = 44100
         self.sio.format = pysoundio.SoundIoFormatFloat32LE
@@ -335,6 +333,9 @@ class TestOutputProcessing(unittest.TestCase):
             backend=pysoundio.SoundIoBackendDummy)
         self.sio.testing = True
         self.callback_called = False
+
+    def tearDown(self):
+        self.sio.close()
 
     def callback(self, data, length):
         self.callback_called = True

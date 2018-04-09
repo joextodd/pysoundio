@@ -159,6 +159,11 @@ class TestInputStreamAPI(unittest.TestCase):
         soundio.instream_open()
         self.assertEqual(soundio.instream_start(), 0)
 
+    def test_instream_pause(self):
+        self.setup_stream()
+        soundio.instream_open()
+        self.assertEqual(soundio.instream_pause(True), 0)
+
     def test_instream_get_latency(self):
         self.setup_stream()
         soundio.instream_open()
@@ -185,12 +190,8 @@ class TestOutputStreamAPI(unittest.TestCase):
         soundio.disconnect()
         soundio.destroy()
 
-    def callback(self):
-        pass
-
     def setup_stream(self):
         self.outstream = soundio.outstream_create(self.device)
-        soundio.set_write_callback(self.callback)
         outstream = ctypes.cast(self.outstream, ctypes.POINTER(pysoundio.SoundIoOutStream))
         outstream.contents.format = soundio.SoundIoFormatFloat32LE
         outstream.contents.sample_rate = 44100
@@ -207,6 +208,11 @@ class TestOutputStreamAPI(unittest.TestCase):
     #     self.setup_stream()
     #     soundio.outstream_open()
     #     self.assertEqual(soundio.outstream_start(), 0)
+
+    def test_outstream_pause(self):
+        self.setup_stream()
+        soundio.outstream_open()
+        self.assertEqual(soundio.outstream_pause(True), 0)
 
     def test_outstream_get_latency(self):
         self.setup_stream()

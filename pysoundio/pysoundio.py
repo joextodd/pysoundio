@@ -398,8 +398,6 @@ class PySoundIo(object):
         by default.
         """
         self.input_buffer = soundio.input_ring_buffer_create(capacity)
-        if not self.input_buffer:
-            raise PySoundIoError('Failed to create ring buffer')
         return self.input_buffer
 
     def _create_output_ring_buffer(self, capacity):
@@ -408,8 +406,6 @@ class PySoundIo(object):
         by default.
         """
         self.output_buffer = soundio.output_ring_buffer_create(capacity)
-        if not self.output_buffer:
-            raise PySoundIoError('Failed to create ring buffer')
         return self.output_buffer
 
     def _create_input_stream(self):
@@ -417,8 +413,6 @@ class PySoundIo(object):
         Allocates memory and sets defaults for input stream
         """
         self.input_stream = soundio.instream_create(self.input_device)
-        if not self.input_stream:
-            raise PySoundIoError('Could not create input stream')
 
         pyinstream = _ctypes.cast(self.input_stream, _ctypes.POINTER(SoundIoInStream))
         soundio.set_read_callback(self._read_callback)
@@ -572,8 +566,6 @@ class PySoundIo(object):
         Allocates memory and sets defaults for output stream
         """
         self.output_stream = soundio.outstream_create(self.output_device)
-        if not self.output_stream:
-            raise PySoundIoError('Could not create output stream')
 
         pystream = _ctypes.cast(self.output_stream, _ctypes.POINTER(SoundIoOutStream))
         if not self.testing:
