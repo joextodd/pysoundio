@@ -713,11 +713,5 @@ class PySoundIo(object):
                     pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
         self._create_output_ring_buffer(capacity)
         self._clear_output_buffer()
-
-        length = self.block_size if self.block_size else 4096
-        data = bytearray(b'\x00' * length * self.output_bytes_per_frame)
-        soundio.ring_buffer_write_ptr(self.output_buffer, data, len(data))
-        soundio.ring_buffer_advance_write_ptr(self.output_buffer, len(data))
-
         self._start_output_stream()
         self.flush()
