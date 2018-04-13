@@ -199,8 +199,8 @@ static PyMethodDef soundio_methods[] = {
         "get bytes per second"
     },
     {
-        "set_read_callback",
-        pysoundio__set_read_callback, METH_VARARGS,
+        "set_read_callbacks",
+        pysoundio__set_read_callbacks, METH_VARARGS,
         "set read callback"
     },
     {
@@ -234,8 +234,8 @@ static PyMethodDef soundio_methods[] = {
         "get next input frame length in seconds"
     },
     {
-        "set_write_callback",
-        pysoundio__set_write_callback, METH_VARARGS,
+        "set_write_callbacks",
+        pysoundio__set_write_callbacks, METH_VARARGS,
         "set write callback"
     },
     {
@@ -348,6 +348,8 @@ struct RecordContext {
 
     PyObject *read_callback;
     PyObject *write_callback;
+    PyObject *overflow_callback;
+    PyObject *underflow_callback;
 };
 struct RecordContext rc;
 
@@ -867,23 +869,37 @@ read_callback(struct SoundIoInStream *instream, int frame_count_min, int frame_c
 static void
 overflow_callback(struct SoundIoInStream *instream)
 {
-    static int count = 0;
-    count++;
+    struct RecordContext *rc = instream->userdata;
+
+    if (rc->overflow_callback) {
+        PyGILState_STATE state = PyGILState_Ensure();
+        PyObject *result = PyObject_CallObject(rc->overflow_callback, NULL);
+        Py_XDECREF(result);
+        PyGILState_Release(state);
+    }
 }
 
 static PyObject *
-pysoundio__set_read_callback(PyObject *self, PyObject *args)
+pysoundio__set_read_callbacks(PyObject *self, PyObject *args)
 {
-    PyObject *temp;
+    PyObject *read;
+    PyObject *flow;
 
-    if (PyArg_ParseTuple(args, "O", &temp)) {
-        if (!PyCallable_Check(temp)) {
+    if (PyArg_ParseTuple(args, "OO", &read, &flow)) {
+        if (!PyCallable_Check(read)) {
             PyErr_SetString(PyExc_TypeError, "parameter must be callable");
             return NULL;
         }
-        Py_XINCREF(temp);
+        if (!PyCallable_Check(flow)) {
+            PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+            return NULL;
+        }
+        Py_XINCREF(read);
+        Py_XINCREF(flow);
         Py_XDECREF(rc.read_callback);
-        rc.read_callback = temp;
+        Py_XDECREF(rc.overflow_callback);
+        rc.read_callback = read;
+        rc.overflow_callback = flow;
         Py_RETURN_NONE;
     }
     return NULL;
@@ -986,18 +1002,26 @@ pysoundio__instream_get_latency(PyObject *self, PyObject *args)
  *************************************************************/
 
 static PyObject *
-pysoundio__set_write_callback(PyObject *self, PyObject *args)
+pysoundio__set_write_callbacks(PyObject *self, PyObject *args)
 {
-    PyObject *temp;
+    PyObject *write;
+    PyObject *flow;
 
-    if (PyArg_ParseTuple(args, "O", &temp)) {
-        if (!PyCallable_Check(temp)) {
+    if (PyArg_ParseTuple(args, "OO", &write, &flow)) {
+        if (!PyCallable_Check(write)) {
             PyErr_SetString(PyExc_TypeError, "parameter must be callable");
             return NULL;
         }
-        Py_XINCREF(temp);
+        if (!PyCallable_Check(flow)) {
+            PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+            return NULL;
+        }
+        Py_XINCREF(write);
+        Py_XINCREF(flow);
         Py_XDECREF(rc.write_callback);
-        rc.write_callback = temp;
+        Py_XDECREF(rc.underflow_callback);
+        rc.write_callback = write;
+        rc.underflow_callback = flow;
         Py_RETURN_NONE;
     }
     return NULL;
@@ -1081,12 +1105,17 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
     }
 }
 
-
 static void
 underflow_callback(struct SoundIoOutStream *outstream)
 {
-    static int count = 0;
-    count++;
+    struct RecordContext *rc = outstream->userdata;
+
+    if (rc->underflow_callback) {
+        PyGILState_STATE state = PyGILState_Ensure();
+        PyObject *result = PyObject_CallObject(rc->underflow_callback, NULL);
+        Py_XDECREF(result);
+        PyGILState_Release(state);
+    }
 }
 
 static PyObject *

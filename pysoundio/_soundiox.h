@@ -107,7 +107,7 @@ pysoundio__get_bytes_per_second(PyObject *self, PyObject *args);
  * Input Stream API
  */
 static PyObject *
-pysoundio__set_read_callback(PyObject *self, PyObject *args);
+pysoundio__set_read_callbacks(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__instream_create(PyObject *self, PyObject *args);
 static PyObject *
@@ -125,7 +125,7 @@ pysoundio__instream_get_latency(PyObject *self, PyObject *args);
  * Output Stream API
  */
 static PyObject *
-pysoundio__set_write_callback(PyObject *self, PyObject *args);
+pysoundio__set_write_callbacks(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__outstream_create(PyObject *self, PyObject *args);
 static PyObject *

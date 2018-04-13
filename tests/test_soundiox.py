@@ -141,7 +141,7 @@ class TestInputStreamAPI(unittest.TestCase):
         pass
 
     def setup_stream(self):
-        soundio.set_read_callback(self.callback)
+        soundio.set_read_callbacks(self.callback, self.callback)
         self.instream = soundio.instream_create(self.device)
         instream = ctypes.cast(self.instream, ctypes.POINTER(pysoundio.SoundIoInStream))
         instream.contents.format = soundio.SoundIoFormatFloat32LE
