@@ -204,11 +204,6 @@ class TestOutputStreamAPI(unittest.TestCase):
         self.setup_stream()
         self.assertEqual(soundio.outstream_open(), 0)
 
-    # def test_outstream_start(self):
-    #     self.setup_stream()
-    #     soundio.outstream_open()
-    #     self.assertEqual(soundio.outstream_start(), 0)
-
     def test_outstream_pause(self):
         self.setup_stream()
         soundio.outstream_open()

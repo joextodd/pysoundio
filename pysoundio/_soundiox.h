@@ -56,6 +56,8 @@ static PyObject *
 pysoundio__version_string(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__format_string(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__get_channel_name(PyObject *self, PyObject *args);
 
 /**
  * Device API

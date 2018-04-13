@@ -29,6 +29,28 @@ SoundIoBackend = {
     SoundIoBackendDummy: 'SoundIoBackendDummy',
 }
 
+SoundIoFormat = {
+    SoundIoFormatS8: 'SoundIoFormatS8',
+    SoundIoFormatU8: 'SoundIoFormatU8',
+    SoundIoFormatS16LE: 'SoundIoFormatS16LE',
+    SoundIoFormatS16BE: 'SoundIoFormatS16BE',
+    SoundIoFormatU16LE: 'SoundIoFormatU16LE',
+    SoundIoFormatU16BE: 'SoundIoFormatU16BE',
+    SoundIoFormatS24LE: 'SoundIoFormatS24LE',
+    SoundIoFormatS24BE: 'SoundIoFormatS24BE',
+    SoundIoFormatU24LE: 'SoundIoFormatU24LE',
+    SoundIoFormatU24BE: 'SoundIoFormatU24BE',
+    SoundIoFormatS32LE: 'SoundIoFormatS32LE',
+    SoundIoFormatS32BE: 'SoundIoFormatS32BE',
+    SoundIoFormatU32LE: 'SoundIoFormatU32LE',
+    SoundIoFormatU32BE: 'SoundIoFormatU32BE',
+    SoundIoFormatFloat32LE: 'SoundIoFormatFloat32LE',
+    SoundIoFormatFloat32BE: 'SoundIoFormatFloat32BE',
+    SoundIoFormatFloat64LE: 'SoundIoFormatFloat64LE',
+    SoundIoFormatFloat64BE: 'SoundIoFormatFloat64BE',
+    SoundIoFormatInvalid: 'SoundIoFormatInvalid'
+}
+
 PRIORITISED_FORMATS = [
     SoundIoFormatFloat32LE,
     SoundIoFormatFloat32BE,

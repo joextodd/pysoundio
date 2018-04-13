@@ -15,6 +15,7 @@ from .constants import (
     DEFAULT_RING_BUFFER_DURATION,
     PRIORITISED_FORMATS,
     PRIORITISED_SAMPLE_RATES,
+    SoundIoFormat
 )
 from .structures import (
     SoundIoErrorCallback,
@@ -26,6 +27,7 @@ from .structures import (
     SoundIoInStream,
     SoundIoOutStream,
     SoundIoChannelLayout,
+    SoundIoSampleRateRange
 )
 import _soundiox as soundio
 
@@ -231,8 +233,13 @@ class PySoundIo(object):
             pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
             input_devices.append({
                 'id': pydevice.contents.id.decode(), 'name': pydevice.contents.name.decode(),
-                'is_raw': pydevice.contents.is_raw, 'is_default': default_input == i
-                # TODO: Add more parameters
+                'is_raw': pydevice.contents.is_raw, 'is_default': default_input == i,
+                'sample_rates': self.get_sample_rates(device),
+                'formats': self.get_formats(device),
+                'layouts': self.get_layouts(device),
+                'software_latency_min': pydevice.contents.software_latency_min,
+                'software_latency_max': pydevice.contents.software_latency_max,
+                'software_latency_current': pydevice.contents.software_latency_current
             })
             soundio.device_unref(device)
 
@@ -241,13 +248,83 @@ class PySoundIo(object):
             pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
             output_devices.append({
                 'id': pydevice.contents.id.decode(), 'name': pydevice.contents.name.decode(),
-                'is_raw': pydevice.contents.is_raw, 'is_default': default_output == i
-                # TODO: Add more parameters
+                'is_raw': pydevice.contents.is_raw, 'is_default': default_output == i,
+                'sample_rates': self.get_sample_rates(device),
+                'formats': self.get_formats(device),
+                'layouts': self.get_layouts(device),
+                'software_latency_min': pydevice.contents.software_latency_min,
+                'software_latency_max': pydevice.contents.software_latency_max,
+                'software_latency_current': pydevice.contents.software_latency_current
             })
             soundio.device_unref(device)
 
         LOGGER.info('%d devices found' % (input_count + output_count))
         return (input_devices, output_devices)
+
+    def get_layouts(self, device):
+        """
+        Return a list of available layouts for a device
+
+        Parameters
+        ----------
+        device: (SoundIoDevice) device object
+
+        Returns
+        -------
+        (dict) Dictionary of available channel layouts for a device
+        """
+        pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
+        current = pydevice.contents.current_layout
+        layouts = {
+            'current': {'name': current.name.decode() if current.name else 'None'},
+            'available': []
+        }
+        for l in range(0, pydevice.contents.layout_count):
+            layouts['available'].append({
+                'name': (pydevice.contents.layouts[l].name.decode() if
+                    pydevice.contents.layouts[l].name else 'None'),
+                'channel_count': pydevice.contents.layouts[l].channel_count
+            })
+        return layouts
+
+    def get_sample_rates(self, device):
+        """
+        Return a list of available sample rates for a device
+
+        Parameters
+        ----------
+        device: (SoundIoDevice) device object
+
+        Returns
+        -------
+        (dict) Dictionary of available sample rates for a device
+        """
+        pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
+        sample_rates = {'current': pydevice.contents.sample_rate_current, 'available': []}
+        for s in range(0, pydevice.contents.sample_rate_count):
+            sample_rates['available'].append({
+                'min': pydevice.contents.sample_rates[s].min,
+                'max': pydevice.contents.sample_rates[s].max
+            })
+        return sample_rates
+
+    def get_formats(self, device):
+        """
+        Return a list of available formats for a device
+
+        Parameters
+        ----------
+        device: (SoundIoDevice) device object
+
+        Returns
+        -------
+        (dict) Dictionary of available formats for a device
+        """
+        pydevice = _ctypes.cast(device, _ctypes.POINTER(SoundIoDevice))
+        formats = {'current': pydevice.contents.current_format, 'available': []}
+        for r in range(0, pydevice.contents.format_count):
+            formats['available'].append(SoundIoFormat[pydevice.contents.formats[r]])
+        return formats
 
     def supports_sample_rate(self, device, rate):
         """
@@ -507,6 +584,14 @@ class PySoundIo(object):
 
             def read_callback(data, length):
                 wav.write(data)
+
+        Overflow callback example
+
+        .. code-block:: python
+            :linenos:
+
+            def overflow_callback():
+                print('buffer overflow')
         """
         self.input['sample_rate'] = sample_rate
         self.input['format'] = dtype
@@ -515,7 +600,7 @@ class PySoundIo(object):
         self.input['read_callback'] = read_callback
         self.input['overflow_callback'] = overflow_callback
 
-        if device_id:
+        if device_id is not None:
             self.input['device'] = self.get_input_device(device_id)
         else:
             self.input['device'] = self.get_default_input_device()
@@ -663,6 +748,14 @@ class PySoundIo(object):
                 for value in outdata:
                     outdata = 1.0
                 data[:] = outdata.tostring()
+
+        Underflow callback example
+
+        .. code-block:: python
+            :linenos:
+
+            def underflow_callback():
+                print('buffer underflow')
         """
         self.output['sample_rate'] = sample_rate
         self.output['format'] = dtype
@@ -671,7 +764,7 @@ class PySoundIo(object):
         self.output['write_callback'] = write_callback
         self.output['underflow_callback'] = underflow_callback
 
-        if device_id:
+        if device_id is not None:
             self.output['device'] = self.get_output_device(device_id)
         else:
             self.output['device'] = self.get_default_output_device()

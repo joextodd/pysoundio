@@ -94,6 +94,11 @@ static PyMethodDef soundio_methods[] = {
         "get string representation of format"
     },
     {
+        "get_channel_name",
+        pysoundio__get_channel_name, METH_VARARGS,
+        "get channel name"
+    },
+    {
         "get_output_device_count",
         pysoundio__get_output_device_count, METH_VARARGS,
         "get output device count"
@@ -511,6 +516,19 @@ pysoundio__format_string(PyObject *self, PyObject *args)
 
     const char *format_string = soundio_format_string(format);
     return Py_BuildValue("s", format_string);
+}
+
+static PyObject *
+pysoundio__get_channel_name(PyObject *self, PyObject *args)
+{
+    int channel;
+
+    if (!PyArg_ParseTuple(args, "i", &channel))
+        return NULL;
+
+    enum SoundIoChannelId id = (enum SoundIoChannelId)channel;
+    const char* name = soundio_get_channel_name(id);
+    return Py_BuildValue("s", name);
 }
 
 
