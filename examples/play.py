@@ -63,9 +63,9 @@ if __name__ == '__main__':
         epilog='Play a wav file over the default output device'
     )
     parser.add_argument('infile', help='WAV output file name')
-    parser.add_argument('--backend', help='Backend to use (optional)')
+    parser.add_argument('--backend', type=int, help='Backend to use (optional)')
     parser.add_argument('--blocksize', type=int, default=4096, help='Block size (optional)')
-    parser.add_argument('--device', help='Output device id (optional)')
+    parser.add_argument('--device', type=int, help='Output device id (optional)')
     args = parser.parse_args()
 
     player = Player(args.infile, args.backend, args.device, args.blocksize)

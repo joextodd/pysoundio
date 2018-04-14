@@ -57,7 +57,7 @@ if __name__ == '__main__':
         epilog='Play a sine wave over the default output device'
     )
     parser.add_argument('--freq', default=442.0, help='Note frequency (optional)')
-    parser.add_argument('--backend', help='Backend to use (optional)')
+    parser.add_argument('--backend', type=int, help='Backend to use (optional)')
     parser.add_argument('--blocksize', type=int, help='Block size (optional)')
     parser.add_argument('--rate', type=int, default=44100, help='Sample rate (optional)')
     parser.add_argument('--device', type=int, help='Output device id (optional)')

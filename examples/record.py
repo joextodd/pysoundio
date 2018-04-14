@@ -51,11 +51,11 @@ if __name__ == '__main__':
         epilog='Stream the input device and save to wav file'
     )
     parser.add_argument('outfile', help='WAV output file name')
-    parser.add_argument('--backend', help='Backend to use (optional)')
-    parser.add_argument('--blocksize', help='Block size (optional)')
-    parser.add_argument('--rate', default=44100, help='Sample rate (optional)')
+    parser.add_argument('--backend', type=int, help='Backend to use (optional)')
+    parser.add_argument('--blocksize', type=int, help='Block size (optional)')
+    parser.add_argument('--rate', type=int default=44100, help='Sample rate (optional)')
     parser.add_argument('--channels', type=int, default=2, help='Mono or stereo (optional)')
-    parser.add_argument('--device', help='Input device id (optional)')
+    parser.add_argument('--device', type=int, help='Input device id (optional)')
     args = parser.parse_args()
 
     record = Record(args.outfile, args.backend, args.device, args.rate, args.blocksize, args.channels)
