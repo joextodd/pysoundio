@@ -25,12 +25,13 @@ setup(
     author_email='joextodd@gmail.com',
     url='http://pysoundio.readthedocs.io/en/latest/',
     download_url='https://github.com/joextodd/pysoundio/archive/' + version.group(1) + '.tar.gz',
+    include_package_data=True,
     packages=['pysoundio'],
     ext_modules=[soundio],
     test_suite='tests',
     keywords=('audio', 'sound', 'stream'),
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: MIT License'
