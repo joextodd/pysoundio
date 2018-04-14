@@ -1,5 +1,10 @@
 include LICENSE.txt
 include README.rst
-include examples/*
-include tests/*
-include pysoundio/_soundio.h
+include examples/play.py
+include examples/devices.py
+include examples/record.py
+include examples/sine.py
+include tests/__init__.py
+include tests/test_pysoundio.py
+include tests/test_soundiox.py
+include pysoundio/_soundiox.h
