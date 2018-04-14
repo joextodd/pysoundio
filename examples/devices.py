@@ -36,7 +36,7 @@ if __name__ == '__main__':
         description='PySoundIo list devices example',
         epilog='List the available input and output devices'
     )
-    parser.add_argument('--backend', help='Backend to use (optional)')
+    parser.add_argument('--backend', type=int, help='Backend to use (optional)')
     args = parser.parse_args()
 
     pysoundio = PySoundIo(backend=args.backend)
