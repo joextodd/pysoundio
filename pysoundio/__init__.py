@@ -21,7 +21,7 @@
 
 import sys
 
-__version__ = '0.0.6'
+__version__ = '1.0.0'
 
 
 try:
@@ -41,6 +41,10 @@ from _soundiox import (
     SoundIoFormatU32LE, SoundIoFormatU32BE,
     SoundIoFormatFloat32LE, SoundIoFormatFloat32BE, SoundIoFormatFloat64LE,
     SoundIoFormatFloat64BE, SoundIoFormatInvalid
+)
+from .constants import (
+    SoundIoBackend,
+    SoundIoFormat
 )
 from .structures import (
     SoundIo,

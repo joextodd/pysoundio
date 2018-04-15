@@ -5,8 +5,7 @@ List the available input and output devices on the system and their properties.
 """
 import argparse
 
-from pysoundio import PySoundIo
-from pysoundio.constants import SoundIoFormat
+from pysoundio import PySoundIo, SoundIoFormat
 
 
 def print_devices(devices):

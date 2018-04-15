@@ -12,7 +12,8 @@ version = re.search(regex, vstr, re.M)
 
 soundio = Extension('_soundiox',
                     sources=['pysoundio/_soundiox.c'],
-                    include_dirs=['./pysoundio'],
+                    include_dirs=['./pysoundio', '/usr/local/include'],
+                    library_dirs=['/usr/local/lib'],
                     libraries=['soundio'])
 
 setup(
