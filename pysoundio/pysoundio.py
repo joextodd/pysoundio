@@ -98,7 +98,8 @@ class PySoundIo(object):
             soundio.connect()
 
         if self.version < '2.0.0':
-            SoundIoOutStream._fields_.remove(('volume', _ctypes.c_float))
+            if ('volume', _ctypes.c_float) in SoundIoOutStream._fields_:
+                SoundIoOutStream._fields_.remove(('volume', _ctypes.c_float))
 
         self.flush()
 
