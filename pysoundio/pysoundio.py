@@ -124,7 +124,7 @@ class PySoundIo(object):
         if self._soundio:
             soundio.disconnect()
             soundio.destroy()
-            self._soundio = None
+            del self._soundio
 
     def flush(self):
         """
