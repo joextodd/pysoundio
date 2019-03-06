@@ -489,9 +489,13 @@ pysoundio__version_string(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
+#if LIBSOUNDIO_VERSION_MAJOR < 2 && LIBSOUNDIO_VERSION_MINOR == 0
+    const char *version = "-.-.-";
+#else
     char version[6];
     sprintf(version, "%d.%d.%d", soundio_version_major(),
         soundio_version_minor(), soundio_version_patch());
+#endif
     return Py_BuildValue("s", version);
 }
 
