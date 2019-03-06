@@ -542,7 +542,7 @@ class PySoundIo(object):
 
         Parameters
         ----------
-        out_latency: (int) output latency in seconds
+        out_latency: (float) output latency in seconds
         """
         return soundio.instream_get_latency(out_latency)
 
@@ -717,9 +717,22 @@ class PySoundIo(object):
 
         Parameters
         ----------
-        out_latency: (int) output latency in seconds
+        out_latency: (float) output latency in seconds
         """
         return soundio.outstream_get_latency(out_latency)
+
+    def set_output_volume(self, volume):
+        """
+        Set the output stream volume.
+
+        Parameters
+        ----------
+        volume: (float) output volume from 0 - 1.0
+        """
+        if self.version >= '2.0.0':
+            return soundio.outstream_set_volume(volume)
+        else:
+            raise NotImplementedError('Not implemented in < 2.0.0')
 
     def start_output_stream(self, device_id=None,
                             sample_rate=None, dtype=None,

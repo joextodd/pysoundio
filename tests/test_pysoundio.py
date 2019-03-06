@@ -278,6 +278,17 @@ class TestPySoundIo(unittest.TestCase):
             channels=2)
         self.assertIsInstance(self.sio.get_output_latency(0.2), int)
 
+    def test_set_output_volume(self):
+        self.sio.start_output_stream(
+            sample_rate=44100,
+            dtype=pysoundio.SoundIoFormatFloat32LE,
+            channels=2)
+        if self.sio.version >= '2.0.0':
+            self.assertEqual(self.sio.set_output_volume(0.5), 0.5)
+        else:
+            with self.assertRaises(NotImplementedError):
+                self.sio.set_output_volume(0.5)
+
     def test_pause_output_stream(self):
         self.sio.start_output_stream(
             sample_rate=44100,

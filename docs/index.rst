@@ -8,7 +8,6 @@
 
 .. include:: ./constants.rst
 
-
 API Reference
 -------------
 
@@ -19,6 +18,7 @@ API Reference
 
 .. only:: html
 
+.. include:: ../CHANGELOG.rst
 
 Index
 =====
