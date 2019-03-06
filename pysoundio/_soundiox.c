@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018 Joe Todd
+ * Copyright (c) 2019 Joe Todd
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -489,8 +489,9 @@ pysoundio__version_string(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
-    // Older Ubuntu versions don't include this
-    const char *version = "libsoundio";
+    char version[6];
+    sprintf(version, "%d.%d.%d", soundio_version_major(),
+        soundio_version_minor(), soundio_version_patch());
     return Py_BuildValue("s", version);
 }
 

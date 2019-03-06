@@ -31,6 +31,10 @@ class TestPySoundIo(unittest.TestCase):
 
     # - Device API
 
+    def test_version(self):
+        self.assertIsInstance(self.sio.version, str)
+        self.assertEqual(len(self.sio.version), 5)
+
     def test_backend_count(self):
         self.assertIsInstance(self.sio.backend_count, int)
 

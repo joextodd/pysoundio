@@ -133,6 +133,13 @@ class PySoundIo(object):
         soundio.flush()
 
     @property
+    def version(self):
+        """
+        Returns the current version of libsoundio
+        """
+        return soundio.version_string()
+
+    @property
     def backend_count(self):
         """
         Returns the number of available backends.
