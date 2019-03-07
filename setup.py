@@ -6,6 +6,7 @@ A robust, cross-platform solution for real-time audio.
 import os
 import re
 import platform
+import shutil
 from setuptools import setup, Extension
 
 vstr = open('pysoundio/__init__.py', 'r').read()
@@ -13,10 +14,13 @@ regex = r"^__version__ = ['\"]([^'\"]*)['\"]"
 version = re.search(regex, vstr, re.M)
 
 if platform.system() == 'Windows':
-    windows_path = os.path.join('C:', os.sep, 'Windows', 'System32', 'libsoundio')
+    windows_path = os.path.join('C:', os.sep, 'libsoundio')
+    library_path = os.path.join(windows_path,
+        'x86_64' if platform.machine().endswith('64') else 'i686')
     include_dirs = ['./pysoundio', windows_path]
-    library_dirs = [os.path.join(windows_path,
-        'x86_64' if platform.machine().endswith('64') else 'i686')]
+    library_dirs = [library_path]
+    shutil.copyfile(os.path.join(library_path, 'libsoundio.dll.a'),
+                    os.path.join(library_path, 'soundio.lib'))
 else:
     include_dirs = ['./pysoundio', '/usr/local/include']
     library_dirs = ['/usr/local/lib']
