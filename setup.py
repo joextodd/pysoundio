@@ -3,17 +3,28 @@ PySoundIo
 
 A robust, cross-platform solution for real-time audio.
 """
+import os
 import re
+import platform
 from setuptools import setup, Extension
 
 vstr = open('pysoundio/__init__.py', 'r').read()
 regex = r"^__version__ = ['\"]([^'\"]*)['\"]"
 version = re.search(regex, vstr, re.M)
 
+if platform.system() == 'Windows':
+    windows_path = os.path.join('C:', os.sep, 'Windows', 'System32', 'libsoundio')
+    include_dirs = ['./pysoundio', windows_path]
+    library_dirs = [os.path.join(windows_path,
+        'x86_64' if platform.machine().endswith('64') else 'i686')]
+else:
+    include_dirs = ['./pysoundio', '/usr/local/include']
+    library_dirs = ['/usr/local/lib']
+
 soundio = Extension('_soundiox',
                     sources=['pysoundio/_soundiox.c'],
-                    include_dirs=['./pysoundio', '/usr/local/include'],
-                    library_dirs=['/usr/local/lib'],
+                    include_dirs=include_dirs,
+                    library_dirs=library_dirs,
                     libraries=['soundio'])
 
 setup(
@@ -30,7 +41,7 @@ setup(
     packages=['pysoundio'],
     ext_modules=[soundio],
     test_suite='tests',
-    keywords=('audio', 'sound', 'stream'),
+    keywords=['audio', 'sound', 'stream'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
