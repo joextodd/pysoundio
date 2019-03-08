@@ -14,7 +14,7 @@ regex = r"^__version__ = ['\"]([^'\"]*)['\"]"
 version = re.search(regex, vstr, re.M)
 
 if platform.system() == 'Windows':
-    windows_path = os.path.join('C:', os.sep, 'libsoundio')
+    windows_path = os.path.join('C:', os.sep, 'ProgramData', 'libsoundio')
     library_path = os.path.join(windows_path,
         'x86_64' if platform.machine().endswith('64') else 'i686')
     include_dirs = ['./pysoundio', windows_path]

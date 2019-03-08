@@ -30,7 +30,7 @@ Dependencies
 * Windows
 
     - Download binaries from `libsound.io <http://libsound.io>`_
-    - Copy the contents of the download into a folder at ``C:\\libsoundio``
+    - Copy the contents of the download into a folder at ``C:\\ProgramData\libsoundio``
 
 Some Ubuntu distributions link to an older version of libsoundio,
 so to use the latest version you will need to install from `source <http://libsound.io/#releases>`_.
