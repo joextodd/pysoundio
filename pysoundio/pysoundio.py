@@ -110,22 +110,22 @@ class PySoundIo(object):
         """
         if self.input['stream']:
             soundio.instream_destroy()
-            self.input['stream'] = None
+            del self.input['stream']
         if self.output['stream']:
             soundio.outstream_destroy()
-            self.output['stream'] = None
+            del self.output['stream']
         if self.input['buffer']:
             soundio.ring_buffer_destroy(self.input['buffer'])
-            self.input['buffer'] = None
+            del self.input['buffer']
         if self.output['buffer']:
             soundio.ring_buffer_destroy(self.output['buffer'])
-            self.output['buffer'] = None
+            del self.output['buffer']
         if self.input['device']:
             soundio.device_unref(self.input['device'])
-            self.input['device'] = None
+            del self.input['device']
         if self.output['device']:
             soundio.device_unref(self.output['device'])
-            self.output['device'] = None
+            del self.output['device']
         if self._soundio:
             soundio.disconnect()
             soundio.destroy()
