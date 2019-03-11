@@ -52,7 +52,7 @@ if __name__ == '__main__':
     )
     parser.add_argument('outfile', help='WAV output file name')
     parser.add_argument('--backend', type=int, help='Backend to use (optional)')
-    parser.add_argument('--blocksize', type=int, help='Block size (optional)')
+    parser.add_argument('--blocksize', type=int, default=4096, help='Block size (optional)')
     parser.add_argument('--rate', type=int, default=44100, help='Sample rate (optional)')
     parser.add_argument('--channels', type=int, default=2, help='Mono or stereo (optional)')
     parser.add_argument('--device', type=int, help='Input device id (optional)')

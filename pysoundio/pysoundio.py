@@ -96,6 +96,11 @@ class PySoundIo(object):
             soundio.connect_backend(backend)
         else:
             soundio.connect()
+
+        if self.version < '2.0.0':
+            if ('volume', _ctypes.c_float) in SoundIoOutStream._fields_:
+                SoundIoOutStream._fields_.remove(('volume', _ctypes.c_float))
+
         self.flush()
 
     def close(self):
@@ -105,32 +110,39 @@ class PySoundIo(object):
         """
         if self.input['stream']:
             soundio.instream_destroy()
-            self.input['stream'] = None
+            del self.input['stream']
         if self.output['stream']:
             soundio.outstream_destroy()
-            self.output['stream'] = None
+            del self.output['stream']
         if self.input['buffer']:
             soundio.ring_buffer_destroy(self.input['buffer'])
-            self.input['buffer'] = None
+            del self.input['buffer']
         if self.output['buffer']:
             soundio.ring_buffer_destroy(self.output['buffer'])
-            self.output['buffer'] = None
+            del self.output['buffer']
         if self.input['device']:
             soundio.device_unref(self.input['device'])
-            self.input['device'] = None
+            del self.input['device']
         if self.output['device']:
             soundio.device_unref(self.output['device'])
-            self.output['device'] = None
+            del self.output['device']
         if self._soundio:
             soundio.disconnect()
             soundio.destroy()
-            self._soundio = None
+            del self._soundio
 
     def flush(self):
         """
         Atomically update information for all connected devices.
         """
         soundio.flush()
+
+    @property
+    def version(self):
+        """
+        Returns the current version of libsoundio
+        """
+        return soundio.version_string()
 
     @property
     def backend_count(self):
@@ -419,42 +431,42 @@ class PySoundIo(object):
         """
         return soundio.channel_layout_get_default(channels)
 
-    def get_bytes_per_frame(self, device, channels):
+    def get_bytes_per_frame(self, format, channels):
         """
         Get the number of bytes per frame
 
         Parameters
         ----------
-        device: (PySoundIoDevice) device
+        format: (SoundIoFormat) format
         channels: (int) number of channels
 
         Returns
         -------
         (int) number of bytes per frame
         """
-        return soundio.get_bytes_per_frame(device, channels)
+        return soundio.get_bytes_per_frame(format, channels)
 
-    def get_bytes_per_sample(self, device):
+    def get_bytes_per_sample(self, format):
         """
         Get the number of bytes per sample
 
         Parameters
         ----------
-        device: (PySoundIoDevice) device
+        format: (SoundIoFormat) format
 
         Returns
         -------
         (int) number of bytes per sample
         """
-        return soundio.get_bytes_per_sample(device)
+        return soundio.get_bytes_per_sample(format)
 
-    def get_bytes_per_second(self, device, channels, sample_rate):
+    def get_bytes_per_second(self, format, channels, sample_rate):
         """
         Get the number of bytes per second
 
         Parameters
         ----------
-        device: (PySoundIoDevice) device
+        format: (SoundIoFormat) format
         channels (int) number of channels
         sample_rate (int) sample rate
 
@@ -462,7 +474,7 @@ class PySoundIo(object):
         -------
         (int) number of bytes per second
         """
-        return soundio.get_bytes_per_second(device, channels, sample_rate)
+        return soundio.get_bytes_per_second(format, channels, sample_rate)
 
     def _create_input_ring_buffer(self, capacity):
         """
@@ -530,7 +542,7 @@ class PySoundIo(object):
 
         Parameters
         ----------
-        out_latency: (int) output latency in seconds
+        out_latency: (float) output latency in seconds
         """
         return soundio.instream_get_latency(out_latency)
 
@@ -625,9 +637,9 @@ class PySoundIo(object):
         self._create_input_stream()
         self._open_input_stream()
         pystream = _ctypes.cast(self.input['stream'], _ctypes.POINTER(SoundIoInStream))
-        self.input['bytes_per_frame'] = pystream.contents.bytes_per_frame
+        self.input['bytes_per_frame'] = self.get_bytes_per_frame(self.input['format'], channels)
         capacity = (DEFAULT_RING_BUFFER_DURATION *
-                    pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
+                    pystream.contents.sample_rate * self.input['bytes_per_frame'])
         self._create_input_ring_buffer(capacity)
         self._start_input_stream()
         self.flush()
@@ -705,9 +717,22 @@ class PySoundIo(object):
 
         Parameters
         ----------
-        out_latency: (int) output latency in seconds
+        out_latency: (float) output latency in seconds
         """
         return soundio.outstream_get_latency(out_latency)
+
+    def set_output_volume(self, volume):
+        """
+        Set the output stream volume.
+
+        Parameters
+        ----------
+        volume: (float) output volume from 0 - 1.0
+        """
+        if self.version >= '2.0.0':
+            return soundio.outstream_set_volume(volume)
+        else:
+            raise NotImplementedError('Not implemented in < 2.0.0')
 
     def start_output_stream(self, device_id=None,
                             sample_rate=None, dtype=None,
@@ -789,9 +814,9 @@ class PySoundIo(object):
         self._create_output_stream()
         self._open_output_stream()
         pystream = _ctypes.cast(self.output['stream'], _ctypes.POINTER(SoundIoOutStream))
-        self.output['bytes_per_frame'] = pystream.contents.bytes_per_frame
+        self.output['bytes_per_frame'] = self.get_bytes_per_frame(self.output['format'], channels)
         capacity = (DEFAULT_RING_BUFFER_DURATION *
-                    pystream.contents.sample_rate * pystream.contents.bytes_per_frame)
+                    pystream.contents.sample_rate * self.output['bytes_per_frame'])
         self._create_output_ring_buffer(capacity)
         self._clear_output_buffer()
         self._start_output_stream()

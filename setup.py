@@ -3,17 +3,32 @@ PySoundIo
 
 A robust, cross-platform solution for real-time audio.
 """
+import os
 import re
+import platform
+import shutil
 from setuptools import setup, Extension
 
 vstr = open('pysoundio/__init__.py', 'r').read()
 regex = r"^__version__ = ['\"]([^'\"]*)['\"]"
 version = re.search(regex, vstr, re.M)
 
+if platform.system() == 'Windows':
+    windows_path = os.path.join('C:', os.sep, 'ProgramData', 'libsoundio')
+    library_path = os.path.join(windows_path,
+        'x86_64' if platform.machine().endswith('64') else 'i686')
+    include_dirs = ['./pysoundio', windows_path]
+    library_dirs = [library_path]
+    shutil.copyfile(os.path.join(library_path, 'libsoundio.dll.a'),
+                    os.path.join(library_path, 'soundio.lib'))
+else:
+    include_dirs = ['./pysoundio', '/usr/local/include']
+    library_dirs = ['/usr/local/lib']
+
 soundio = Extension('_soundiox',
                     sources=['pysoundio/_soundiox.c'],
-                    include_dirs=['./pysoundio', '/usr/local/include'],
-                    library_dirs=['/usr/local/lib'],
+                    include_dirs=include_dirs,
+                    library_dirs=library_dirs,
                     libraries=['soundio'])
 
 setup(
@@ -30,9 +45,9 @@ setup(
     packages=['pysoundio'],
     ext_modules=[soundio],
     test_suite='tests',
-    keywords=('audio', 'sound', 'stream'),
+    keywords=['audio', 'sound', 'stream'],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: MIT License'

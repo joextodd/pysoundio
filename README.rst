@@ -27,7 +27,12 @@ Dependencies
 
     apt-get install libsoundio-dev
 
-Ubuntu distributions link to an older version of libsoundio,
+* Windows
+
+    - Download binaries from `libsound.io <http://libsound.io>`_
+    - Copy the contents of the download into a folder at ``C:\\ProgramData\libsoundio``
+
+Some Ubuntu distributions link to an older version of libsoundio,
 so to use the latest version you will need to install from `source <http://libsound.io/#releases>`_.
 
 
@@ -53,9 +58,8 @@ Some of the examples require `pysoundfile <https://pysoundfile.readthedocs.io/en
 
     pip install pysoundfile
 
-* macOS ::
-
-    brew install libsndfile
+On Windows and OS X, this will also install the library libsndfile. On Linux you will need
+to install the library as well.
 
 * Ubuntu / Debian ::
 

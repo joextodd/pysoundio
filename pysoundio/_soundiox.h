@@ -142,6 +142,8 @@ static PyObject *
 pysoundio__outstream_clear_buffer(PyObject *self, PyObject *args);
 static PyObject *
 pysoundio__outstream_get_latency(PyObject *self, PyObject *args);
+static PyObject *
+pysoundio__outstream_set_volume(PyObject *self, PyObject *args);
 
 /**
  * Ring Buffer API

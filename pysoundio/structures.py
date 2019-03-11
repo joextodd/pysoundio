@@ -143,6 +143,7 @@ class SoundIoOutStream(_ctypes.Structure):
         ('sample_rate', _ctypes.c_int),
         ('layout', SoundIoChannelLayout),
         ('software_latency', _ctypes.c_double),
+        ('volume', _ctypes.c_float),
         ('userdata', _ctypes.c_void_p),
         ('write_callback', SoundIoWriteCallback),
         ('underflow_callback', SoundIoUnderflowCallback),

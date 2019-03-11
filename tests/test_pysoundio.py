@@ -31,6 +31,10 @@ class TestPySoundIo(unittest.TestCase):
 
     # - Device API
 
+    def test_version(self):
+        self.assertIsInstance(self.sio.version, str)
+        self.assertEqual(len(self.sio.version), 5)
+
     def test_backend_count(self):
         self.assertIsInstance(self.sio.backend_count, int)
 
@@ -273,6 +277,15 @@ class TestPySoundIo(unittest.TestCase):
             dtype=pysoundio.SoundIoFormatFloat32LE,
             channels=2)
         self.assertIsInstance(self.sio.get_output_latency(0.2), int)
+
+    def test_set_output_volume(self):
+        self.sio.start_output_stream(
+            sample_rate=44100,
+            dtype=pysoundio.SoundIoFormatFloat32LE,
+            channels=2)
+        if self.sio.version < '2.0.0':
+            with self.assertRaises(NotImplementedError):
+                self.sio.set_output_volume(0.5)
 
     def test_pause_output_stream(self):
         self.sio.start_output_stream(
