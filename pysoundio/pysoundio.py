@@ -103,6 +103,13 @@ class PySoundIo(object):
 
         self.flush()
 
+    def __del__(self):
+        """
+        Close connection if not done already
+        """
+        if self._soundio:
+            self.close()
+
     def close(self):
         """
         Clean up allocated memory

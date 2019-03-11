@@ -1,0 +1,3 @@
+[submodule "pysoundio/libraries"]
+	path = pysoundio/libraries
+	url = git@github.com:joextodd/libsoundio-binaries.git

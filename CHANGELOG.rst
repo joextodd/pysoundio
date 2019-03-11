@@ -1,6 +1,10 @@
 Changelog
 ----------
 
+**v1.2.0**
+
+* Package libsoundio binaries
+
 **v1.1.0**
 
 * Add support for libsoundio v2.0.0

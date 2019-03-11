@@ -13,17 +13,27 @@ vstr = open('pysoundio/__init__.py', 'r').read()
 regex = r"^__version__ = ['\"]([^'\"]*)['\"]"
 version = re.search(regex, vstr, re.M)
 
-if platform.system() == 'Windows':
+if platform.system() == 'Darwin':
+    include_dirs = ['./pysoundio', '/usr/local/include', './pysoundio/libraries/include']
+    library_dirs = ['/usr/local/lib', './pysoundio/libraries/darwin']
+elif platform.system() == 'Linux':
+    include_dirs = ['./pysoundio', '/usr/local/include', './pysoundio/libraries/include']
+    library_dirs = ['/usr/local/lib', './pysoundio/libraries/linux']
+elif platform.system() == 'Windows':
     windows_path = os.path.join('C:', os.sep, 'ProgramData', 'libsoundio')
     library_path = os.path.join(windows_path,
         'x86_64' if platform.machine().endswith('64') else 'i686')
-    include_dirs = ['./pysoundio', windows_path]
+    include_dirs = ['./pysoundio', windows_path, './pysoundio/libraries/include']
     library_dirs = [library_path]
-    shutil.copyfile(os.path.join(library_path, 'libsoundio.dll.a'),
-                    os.path.join(library_path, 'soundio.lib'))
+    library_dirs.append('./pysoundio/libraries/win' +
+        '64' if platform.machine().endswith('64') else '32')
+
+    if os.path.exists(os.path.join(library_path, 'libsoundio.dll.a')):
+        shutil.copyfile(os.path.join(library_path, 'libsoundio.dll.a'),
+                        os.path.join(library_path, 'soundio.lib'))
 else:
-    include_dirs = ['./pysoundio', '/usr/local/include']
-    library_dirs = ['/usr/local/lib']
+    raise Exception('%s platforms are not supported, ' \
+        'please create an issue at github.com/joextodd/pysoundio', platform.system())
 
 soundio = Extension('_soundiox',
                     sources=['pysoundio/_soundiox.c'],
