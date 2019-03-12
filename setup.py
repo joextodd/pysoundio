@@ -18,12 +18,17 @@ if platform.system() == 'Darwin':
     library_dirs = ['/usr/local/lib', './pysoundio/libraries/darwin']
 elif platform.system() == 'Linux':
     include_dirs = ['./pysoundio', '/usr/local/include', './pysoundio/libraries/include']
-    library_dirs = ['/usr/local/lib', './pysoundio/libraries/linux']
+    if platform.machine().startswith('arm'):
+        library_dirs = ['/usr/local/lib']
+        library_dirs.append('./pysoundio/libraries/rpiv6' if
+            platform.machine().endswith('v6l') else './pysoundio/libraries/rpiv7')
+    else:
+        library_dirs = ['/usr/local/lib', './pysoundio/libraries/linux']
 elif platform.system() == 'Windows':
     windows_path = os.path.join('C:', os.sep, 'ProgramData', 'libsoundio')
     library_path = os.path.join(windows_path,
         'x86_64' if platform.machine().endswith('64') else 'i686')
-    include_dirs = ['./pysoundio', windows_path, './pysoundio/libraries/include']
+    include_dirs = ['./pysoundio', windows_path, './pysoundio/libraries/include/windows']
     library_dirs = [library_path]
     library_dirs.append('./pysoundio/libraries/win' +
         '64' if platform.machine().endswith('64') else '32')
