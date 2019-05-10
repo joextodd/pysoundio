@@ -596,10 +596,6 @@ pysoundio__get_input_device(PyObject *self, PyObject *args)
         return NULL;
 
     rc.input_device = soundio_get_input_device(rc.soundio, device_index);
-    if (rc.input_device->probe_error) {
-        PyErr_SetString(PySoundIoError, "Unable to probe device\n");
-        return NULL;
-    }
 
     return PyLong_FromVoidPtr(rc.input_device);
 }
@@ -613,10 +609,6 @@ pysoundio__get_output_device(PyObject *self, PyObject *args)
         return NULL;
 
     rc.output_device = soundio_get_output_device(rc.soundio, device_index);
-    if (rc.output_device->probe_error) {
-        PyErr_SetString(PySoundIoError, "Unable to probe device\n");
-        return NULL;
-    }
 
     return PyLong_FromVoidPtr(rc.output_device);
 }
