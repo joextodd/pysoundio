@@ -251,7 +251,8 @@ class PySoundIo(object):
                 'layouts': self.get_layouts(device),
                 'software_latency_min': pydevice.contents.software_latency_min,
                 'software_latency_max': pydevice.contents.software_latency_max,
-                'software_latency_current': pydevice.contents.software_latency_current
+                'software_latency_current': pydevice.contents.software_latency_current,
+                'probe_error': PySoundIoError(soundio.strerror(pydevice.contents.probe_error)) if pydevice.contents.probe_error else None
             })
             soundio.device_unref(device)
 
@@ -266,7 +267,8 @@ class PySoundIo(object):
                 'layouts': self.get_layouts(device),
                 'software_latency_min': pydevice.contents.software_latency_min,
                 'software_latency_max': pydevice.contents.software_latency_max,
-                'software_latency_current': pydevice.contents.software_latency_current
+                'software_latency_current': pydevice.contents.software_latency_current,
+                'probe_error': PySoundIoError(soundio.strerror(pydevice.contents.probe_error)) if pydevice.contents.probe_error else None
             })
             soundio.device_unref(device)
 
